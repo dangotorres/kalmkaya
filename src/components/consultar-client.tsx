@@ -1,0 +1,116 @@
+"use client";
+
+import { useState } from "react";
+import { Registro } from "@/lib/sheets";
+import TablaRegistros from "@/components/tabla-registros";
+import ModalRegistro from "@/components/modal-registro";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+
+interface Props {
+  userName: string;
+  isAdmin: boolean;
+}
+
+export default function ConsultarClient({ userName, isAdmin }: Props) {
+  const [fecha, setFecha] = useState(""); // formato input: yyyy-MM-dd
+  const [registros, setRegistros] = useState<Registro[] | null>(null);
+  const [nombreHoja, setNombreHoja] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [sinHoja, setSinHoja] = useState(false);
+
+  function inputANombreHoja(val: string): string {
+    if (!val) return "";
+    const [y, m, d] = val.split("-");
+    return `${d}/${m}/${y}`;
+  }
+
+  async function buscar() {
+    if (!fecha) return;
+    setLoading(true);
+    const hoja = inputANombreHoja(fecha);
+    try {
+      const res = await fetch(`/api/registros?fecha=${hoja}`);
+      const data = await res.json();
+      setRegistros(data.registros ?? []);
+      setNombreHoja(data.nombreHoja);
+      setSinHoja(!!data.sinHoja);
+    } catch {
+      toast.error("Error al consultar los datos");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function recargar() {
+    if (!nombreHoja) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/registros?fecha=${nombreHoja}`);
+      const data = await res.json();
+      setRegistros(data.registros ?? []);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-stone-800">Consultar día</h1>
+        <p className="text-stone-500 text-sm">Selecciona una fecha para ver sus registros</p>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-3 items-end max-w-sm">
+        <div className="flex-1 space-y-1.5">
+          <Label htmlFor="fecha">Fecha</Label>
+          <Input
+            id="fecha"
+            type="date"
+            value={fecha}
+            onChange={(e) => setFecha(e.target.value)}
+            max={new Date().toISOString().split("T")[0]}
+          />
+        </div>
+        <Button onClick={buscar} disabled={!fecha || loading}>
+          {loading ? "Buscando..." : "Buscar"}
+        </Button>
+      </div>
+
+      {registros !== null && (
+        <div className="space-y-4">
+          {sinHoja ? (
+            <div className="text-center py-12 bg-white rounded-lg border text-stone-400">
+              <p className="font-medium">No existe una hoja para {nombreHoja}</p>
+              <p className="text-sm mt-1">No se registraron datos ese día</p>
+            </div>
+          ) : (
+            <>
+              <div className="flex flex-wrap gap-2 justify-end">
+                <ModalRegistro tipo="servicio" userName={userName} fecha={nombreHoja} onGuardado={recargar} />
+                <ModalRegistro tipo="egreso" userName={userName} fecha={nombreHoja} onGuardado={recargar} />
+                {isAdmin && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      window.open(
+                        `https://docs.google.com/spreadsheets/d/${process.env.NEXT_PUBLIC_SPREADSHEET_ID}/edit`,
+                        "_blank"
+                      )
+                    }
+                  >
+                    Ver en Google Sheets ↗
+                  </Button>
+                )}
+              </div>
+              <TablaRegistros registros={registros} nombreHoja={nombreHoja} isAdmin={true} />
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
