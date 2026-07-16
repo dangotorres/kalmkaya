@@ -17,6 +17,7 @@ interface Props {
   registros: Registro[];
   nombreHoja: string;
   isAdmin: boolean;
+  showTotals?: boolean;
 }
 
 function fmt(n: number | null) {
@@ -24,7 +25,7 @@ function fmt(n: number | null) {
   return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
 }
 
-export default function TablaRegistros({ registros, nombreHoja, isAdmin }: Props) {
+export default function TablaRegistros({ registros, nombreHoja, isAdmin, showTotals = true }: Props) {
   const totalIngresos = registros.reduce((a, r) => a + (r.precio ?? 0), 0);
   const totalEgresos = registros.reduce((a, r) => a + (r.egreso ?? 0), 0);
   const neto = totalIngresos - totalEgresos;
@@ -44,29 +45,31 @@ export default function TablaRegistros({ registros, nombreHoja, isAdmin }: Props
 
   return (
     <div className="space-y-4">
-      {/* Cards de resumen */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        <Card className="border-green-200 bg-green-50">
-          <CardContent className="p-3 sm:p-4">
-            <p className="text-xs text-green-700 font-medium uppercase tracking-wide">Ingresos</p>
-            <p className="text-sm sm:text-xl font-bold text-green-800 mt-1">{fmt(totalIngresos)}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="p-3 sm:p-4">
-            <p className="text-xs text-red-700 font-medium uppercase tracking-wide">Egresos</p>
-            <p className="text-sm sm:text-xl font-bold text-red-800 mt-1">{fmt(totalEgresos)}</p>
-          </CardContent>
-        </Card>
-        <Card className={`border-stone-200 ${neto >= 0 ? "bg-stone-50" : "bg-orange-50"}`}>
-          <CardContent className="p-3 sm:p-4">
-            <p className="text-xs text-stone-700 font-medium uppercase tracking-wide">Neto</p>
-            <p className={`text-sm sm:text-xl font-bold mt-1 ${neto >= 0 ? "text-stone-800" : "text-orange-700"}`}>
-              {fmt(neto)}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Cards de resumen — ocultas para colaboradores */}
+      {showTotals && (
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="p-3 sm:p-4">
+              <p className="text-xs text-green-700 font-medium uppercase tracking-wide">Ingresos</p>
+              <p className="text-sm sm:text-xl font-bold text-green-800 mt-1">{fmt(totalIngresos)}</p>
+            </CardContent>
+          </Card>
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="p-3 sm:p-4">
+              <p className="text-xs text-red-700 font-medium uppercase tracking-wide">Egresos</p>
+              <p className="text-sm sm:text-xl font-bold text-red-800 mt-1">{fmt(totalEgresos)}</p>
+            </CardContent>
+          </Card>
+          <Card className={`border-stone-200 ${neto >= 0 ? "bg-stone-50" : "bg-orange-50"}`}>
+            <CardContent className="p-3 sm:p-4">
+              <p className="text-xs text-stone-700 font-medium uppercase tracking-wide">Neto</p>
+              <p className={`text-sm sm:text-xl font-bold mt-1 ${neto >= 0 ? "text-stone-800" : "text-orange-700"}`}>
+                {fmt(neto)}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Desglose por colaborador y tipo de pago — solo admin */}
       {isAdmin && porColaborador.length > 0 && (

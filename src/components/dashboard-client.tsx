@@ -14,6 +14,7 @@ interface Props {
   canViewReports: boolean;
   userName: string;
   sinHoja: boolean;
+  role: string;
 }
 
 export default function DashboardClient({
@@ -23,8 +24,12 @@ export default function DashboardClient({
   canViewReports,
   userName,
   sinHoja: initialSinHoja,
+  role,
 }: Props) {
-  const [registros, setRegistros] = useState<Registro[]>(initialRegistros);
+  const isColaborador = role === "colaborador";
+  const [registros, setRegistros] = useState<Registro[]>(
+    isColaborador ? initialRegistros.filter((r) => r.colaborador === userName) : initialRegistros
+  );
   const [sinHoja, setSinHoja] = useState(initialSinHoja);
   const [reloading, setReloading] = useState(false);
 
@@ -33,7 +38,8 @@ export default function DashboardClient({
     try {
       const res = await fetch(`/api/registros?fecha=${nombreHoja}`);
       const data = await res.json();
-      setRegistros(data.registros ?? []);
+      const todos: Registro[] = data.registros ?? [];
+      setRegistros(isColaborador ? todos.filter((r) => r.colaborador === userName) : todos);
       setSinHoja(!!data.sinHoja);
     } catch {
       toast.error("Error al recargar los datos");
@@ -82,7 +88,7 @@ export default function DashboardClient({
       {reloading ? (
         <div className="text-center py-12 text-stone-400 text-sm">Cargando...</div>
       ) : (
-        <TablaRegistros registros={registros} nombreHoja={nombreHoja} isAdmin={canViewReports} />
+        <TablaRegistros registros={registros} nombreHoja={nombreHoja} isAdmin={canViewReports} showTotals={!isColaborador} />
       )}
     </div>
   );

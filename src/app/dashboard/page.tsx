@@ -27,6 +27,7 @@ export default async function DashboardPage() {
       canViewReports={canViewReports}
       userName={session?.user?.name ?? ""}
       sinHoja={sinHoja}
+      role={role ?? "colaborador"}
     />
   );
 }
