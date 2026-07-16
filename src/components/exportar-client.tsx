@@ -120,7 +120,7 @@ export default function ExportarClient() {
       {/* Selector de fechas */}
       <Card>
         <CardContent className="pt-4 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="inicio">Fecha inicio</Label>
               <Input
@@ -129,6 +129,7 @@ export default function ExportarClient() {
                 value={inicio}
                 onChange={(e) => { setInicio(e.target.value); setResumen(null); }}
                 max={hoy}
+                className="w-full"
               />
             </div>
             <div className="space-y-1.5">
@@ -140,6 +141,7 @@ export default function ExportarClient() {
                 onChange={(e) => { setFin(e.target.value); setResumen(null); }}
                 max={hoy}
                 min={inicio}
+                className="w-full"
               />
             </div>
           </div>
@@ -159,23 +161,23 @@ export default function ExportarClient() {
         <div className="space-y-4">
 
           {/* Totales generales */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
             <Card className="border-green-200 bg-green-50">
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <p className="text-xs text-green-700 font-medium uppercase tracking-wide">Ingresos</p>
-                <p className="text-xl font-bold text-green-800 mt-1">{fmt(resumen.totalIngresos)}</p>
+                <p className="text-sm sm:text-xl font-bold text-green-800 mt-1">{fmt(resumen.totalIngresos)}</p>
               </CardContent>
             </Card>
             <Card className="border-red-200 bg-red-50">
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <p className="text-xs text-red-700 font-medium uppercase tracking-wide">Egresos</p>
-                <p className="text-xl font-bold text-red-800 mt-1">{fmt(resumen.totalEgresos)}</p>
+                <p className="text-sm sm:text-xl font-bold text-red-800 mt-1">{fmt(resumen.totalEgresos)}</p>
               </CardContent>
             </Card>
             <Card className={`${resumen.neto >= 0 ? "border-stone-200 bg-stone-50" : "border-orange-200 bg-orange-50"}`}>
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <p className="text-xs text-stone-700 font-medium uppercase tracking-wide">Neto</p>
-                <p className={`text-xl font-bold mt-1 ${resumen.neto >= 0 ? "text-stone-800" : "text-orange-700"}`}>
+                <p className={`text-sm sm:text-xl font-bold mt-1 ${resumen.neto >= 0 ? "text-stone-800" : "text-orange-700"}`}>
                   {fmt(resumen.neto)}
                 </p>
               </CardContent>
@@ -284,8 +286,8 @@ export default function ExportarClient() {
         open={!!detalleModal}
         onOpenChange={(open) => { if (!open) setDetalleModal(null); }}
       >
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
+        <DialogContent className="flex flex-col w-[95vw] max-w-lg max-h-[85vh] rounded-xl p-0 gap-0">
+          <DialogHeader className="px-4 pt-4 pb-3 border-b shrink-0">
             <DialogTitle>
               Servicios de {detalleModal?.nombre}
             </DialogTitle>
@@ -293,8 +295,8 @@ export default function ExportarClient() {
           </DialogHeader>
 
           {detalleModal && (
-            <div className="space-y-3 mt-1">
-              <div className="overflow-x-auto rounded-lg border">
+            <div className="flex flex-col flex-1 min-h-0">
+              <div className="overflow-y-auto flex-1 px-0">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -327,7 +329,7 @@ export default function ExportarClient() {
                   </TableBody>
                 </Table>
               </div>
-              <div className="flex justify-between items-center px-1 text-sm">
+              <div className="flex justify-between items-center px-4 py-3 border-t bg-stone-50 rounded-b-xl shrink-0 text-sm">
                 <span className="text-stone-500">{detalleModal.detalle.length} servicios</span>
                 <span className="font-bold">
                   Total: {fmt(detalleModal.detalle.reduce((a, r) => a + r.precio, 0))}

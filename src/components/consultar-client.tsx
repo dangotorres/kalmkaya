@@ -58,23 +58,24 @@ export default function ConsultarClient({ userName, isAdmin }: Props) {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="text-center sm:text-left">
         <h1 className="text-2xl font-bold text-stone-800">Consultar día</h1>
         <p className="text-stone-500 text-sm">Selecciona una fecha para ver sus registros</p>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 items-end max-w-sm">
+      <div className="flex flex-col gap-3 w-full sm:flex-row sm:items-end sm:max-w-sm mx-auto sm:mx-0">
         <div className="flex-1 space-y-1.5">
-          <Label htmlFor="fecha">Fecha</Label>
+          <Label htmlFor="fecha" className="block text-center sm:text-left">Fecha</Label>
           <Input
             id="fecha"
             type="date"
             value={fecha}
             onChange={(e) => setFecha(e.target.value)}
             max={new Date().toISOString().split("T")[0]}
+            className="w-full"
           />
         </div>
-        <Button onClick={buscar} disabled={!fecha || loading}>
+        <Button className="w-full sm:w-auto" onClick={buscar} disabled={!fecha || loading}>
           {loading ? "Buscando..." : "Buscar"}
         </Button>
       </div>

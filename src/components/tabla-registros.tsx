@@ -45,23 +45,23 @@ export default function TablaRegistros({ registros, nombreHoja, isAdmin }: Props
   return (
     <div className="space-y-4">
       {/* Cards de resumen */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <Card className="border-green-200 bg-green-50">
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <p className="text-xs text-green-700 font-medium uppercase tracking-wide">Ingresos</p>
-            <p className="text-xl font-bold text-green-800 mt-1">{fmt(totalIngresos)}</p>
+            <p className="text-sm sm:text-xl font-bold text-green-800 mt-1">{fmt(totalIngresos)}</p>
           </CardContent>
         </Card>
         <Card className="border-red-200 bg-red-50">
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <p className="text-xs text-red-700 font-medium uppercase tracking-wide">Egresos</p>
-            <p className="text-xl font-bold text-red-800 mt-1">{fmt(totalEgresos)}</p>
+            <p className="text-sm sm:text-xl font-bold text-red-800 mt-1">{fmt(totalEgresos)}</p>
           </CardContent>
         </Card>
         <Card className={`border-stone-200 ${neto >= 0 ? "bg-stone-50" : "bg-orange-50"}`}>
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <p className="text-xs text-stone-700 font-medium uppercase tracking-wide">Neto</p>
-            <p className={`text-xl font-bold mt-1 ${neto >= 0 ? "text-stone-800" : "text-orange-700"}`}>
+            <p className={`text-sm sm:text-xl font-bold mt-1 ${neto >= 0 ? "text-stone-800" : "text-orange-700"}`}>
               {fmt(neto)}
             </p>
           </CardContent>
@@ -81,8 +81,8 @@ export default function TablaRegistros({ registros, nombreHoja, isAdmin }: Props
                   <TableRow>
                     <TableHead>Colaborador</TableHead>
                     <TableHead className="text-right">Servicios</TableHead>
-                    <TableHead className="text-right">Efectivo</TableHead>
-                    <TableHead className="text-right">Terminal</TableHead>
+                    <TableHead className="text-right hidden sm:table-cell">Efectivo</TableHead>
+                    <TableHead className="text-right hidden sm:table-cell">Terminal</TableHead>
                     <TableHead className="text-right">Total</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -91,8 +91,8 @@ export default function TablaRegistros({ registros, nombreHoja, isAdmin }: Props
                     <TableRow key={c.nombre}>
                       <TableCell className="font-medium">{c.nombre}</TableCell>
                       <TableCell className="text-right">{c.servicios}</TableCell>
-                      <TableCell className="text-right">{fmt(c.efectivo)}</TableCell>
-                      <TableCell className="text-right">{fmt(c.terminal)}</TableCell>
+                      <TableCell className="text-right hidden sm:table-cell">{fmt(c.efectivo)}</TableCell>
+                      <TableCell className="text-right hidden sm:table-cell">{fmt(c.terminal)}</TableCell>
                       <TableCell className="text-right font-semibold">{fmt(c.total)}</TableCell>
                     </TableRow>
                   ))}
@@ -100,9 +100,9 @@ export default function TablaRegistros({ registros, nombreHoja, isAdmin }: Props
               </Table>
             </div>
             <Separator />
-            <div className="flex gap-4 text-sm">
-              <span className="text-stone-600">Efectivo total: <strong>{fmt(porTipoPago.efectivo)}</strong></span>
-              <span className="text-stone-600">Terminal total: <strong>{fmt(porTipoPago.terminal)}</strong></span>
+            <div className="flex flex-wrap gap-4 text-sm">
+              <span className="text-stone-600">Efectivo: <strong>{fmt(porTipoPago.efectivo)}</strong></span>
+              <span className="text-stone-600">Terminal: <strong>{fmt(porTipoPago.terminal)}</strong></span>
             </div>
           </CardContent>
         </Card>
@@ -126,20 +126,29 @@ export default function TablaRegistros({ registros, nombreHoja, isAdmin }: Props
                   <TableRow>
                     <TableHead>#</TableHead>
                     <TableHead>Servicio / Concepto</TableHead>
-                    <TableHead>Colaborador</TableHead>
-                    <TableHead>Tipo Pago</TableHead>
+                    <TableHead className="hidden sm:table-cell">Colaborador</TableHead>
+                    <TableHead className="hidden sm:table-cell">Tipo Pago</TableHead>
                     <TableHead className="text-right">Ingreso</TableHead>
-                    <TableHead className="text-right">Egreso</TableHead>
-                    <TableHead>Notas</TableHead>
+                    <TableHead className="text-right hidden sm:table-cell">Egreso</TableHead>
+                    <TableHead className="hidden sm:table-cell">Notas</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {registros.map((r, i) => (
                     <TableRow key={i} className={r.egreso ? "bg-red-50/40" : ""}>
                       <TableCell className="text-stone-400 text-xs">{i + 1}</TableCell>
-                      <TableCell className="font-medium">{r.servicio || "—"}</TableCell>
-                      <TableCell>{r.colaborador || <span className="text-stone-400">—</span>}</TableCell>
-                      <TableCell>
+                      <TableCell className="font-medium">
+                        {r.servicio || "—"}
+                        {/* En mobile mostramos colaborador y pago bajo el nombre */}
+                        <span className="sm:hidden block text-xs text-stone-400 mt-0.5">
+                          {r.colaborador && <span>{r.colaborador}</span>}
+                          {r.colaborador && r.tipoPago && <span> · </span>}
+                          {r.tipoPago && <span>{r.tipoPago}</span>}
+                          {r.egreso ? <span className="text-red-500"> · Egreso {fmt(r.egreso)}</span> : null}
+                        </span>
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">{r.colaborador || <span className="text-stone-400">—</span>}</TableCell>
+                      <TableCell className="hidden sm:table-cell">
                         {r.tipoPago ? (
                           <Badge variant={r.tipoPago === "Efectivo" ? "secondary" : "outline"} className="text-xs">
                             {r.tipoPago}
@@ -149,10 +158,10 @@ export default function TablaRegistros({ registros, nombreHoja, isAdmin }: Props
                       <TableCell className="text-right text-green-700 font-medium">
                         {r.precio ? fmt(r.precio) : "—"}
                       </TableCell>
-                      <TableCell className="text-right text-red-600 font-medium">
+                      <TableCell className="text-right text-red-600 font-medium hidden sm:table-cell">
                         {r.egreso ? fmt(r.egreso) : "—"}
                       </TableCell>
-                      <TableCell className="text-stone-500 text-sm">{r.notas || "—"}</TableCell>
+                      <TableCell className="text-stone-500 text-sm hidden sm:table-cell">{r.notas || "—"}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
