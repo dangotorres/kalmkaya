@@ -111,17 +111,23 @@ export default function ModalRegistro({ tipo, userName, fecha, onGuardado }: Pro
   const [colaborador, setColaborador] = useState(userName);
   const [tipoPago, setTipoPago] = useState("Efectivo");
   const [notas, setNotas] = useState("");
+  const [egresoSalon, setEgresoSalon] = useState(false);
 
   const precioInput = useCurrencyInput();
   const egresoInput = useCurrencyInput();
+  const efectivoInput = useCurrencyInput();
+  const terminalInput = useCurrencyInput();
 
   function reset() {
     setServicio("");
     setColaborador(userName);
     setTipoPago("Efectivo");
     setNotas("");
+    setEgresoSalon(false);
     precioInput.reset();
     egresoInput.reset();
+    efectivoInput.reset();
+    terminalInput.reset();
   }
 
   async function handleGuardar(e: React.FormEvent) {
@@ -131,10 +137,23 @@ export default function ModalRegistro({ tipo, userName, fecha, onGuardado }: Pro
       return;
     }
 
+    const esCombinado = tipoPago === "Combinado";
+
     if (tipo === "servicio") {
-      if (!precioInput.rawValue || precioInput.rawValue <= 0) {
-        toast.error("El precio debe ser mayor a $0");
-        return;
+      if (esCombinado) {
+        if (!efectivoInput.rawValue || efectivoInput.rawValue <= 0) {
+          toast.error("El monto en Efectivo debe ser mayor a $0");
+          return;
+        }
+        if (!terminalInput.rawValue || terminalInput.rawValue <= 0) {
+          toast.error("El monto en Terminal debe ser mayor a $0");
+          return;
+        }
+      } else {
+        if (!precioInput.rawValue || precioInput.rawValue <= 0) {
+          toast.error("El precio debe ser mayor a $0");
+          return;
+        }
       }
     } else {
       if (!egresoInput.rawValue || egresoInput.rawValue <= 0) {
@@ -145,14 +164,43 @@ export default function ModalRegistro({ tipo, userName, fecha, onGuardado }: Pro
 
     setLoading(true);
 
-    const body: Record<string, unknown> = {
+    const baseBody = {
       servicio,
       colaborador,
-      tipoPago,
       notas,
       ...(fecha ? { fecha } : {}),
     };
 
+    if (esCombinado && tipo === "servicio") {
+      // Dos registros secuenciales para evitar conflicto al crear la hoja del día
+      const res1 = await fetch("/api/registros", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...baseBody, tipoPago: "Efectivo", precio: efectivoInput.rawValue }),
+      });
+      if (!res1.ok) {
+        setLoading(false);
+        toast.error("Error al guardar el registro de Efectivo");
+        return;
+      }
+      const res2 = await fetch("/api/registros", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...baseBody, tipoPago: "Terminal", precio: terminalInput.rawValue }),
+      });
+      setLoading(false);
+      if (res2.ok) {
+        toast.success("Registro combinado guardado correctamente");
+        reset();
+        setOpen(false);
+        onGuardado();
+      } else {
+        toast.error("Error al guardar el registro de Terminal");
+      }
+      return;
+    }
+
+    const body: Record<string, unknown> = { ...baseBody, tipoPago };
     if (tipo === "egreso") {
       body.salidasEgresos = egresoInput.rawValue;
     } else {
@@ -210,31 +258,56 @@ export default function ModalRegistro({ tipo, userName, fecha, onGuardado }: Pro
             />
           </div>
 
-          {!esEgreso && (
-            <div className="space-y-1.5">
-              <Label htmlFor="colaborador">Colaborador</Label>
-              <Select value={colaborador} onValueChange={(v) => setColaborador(v ?? "")}>
-                <SelectTrigger id="colaborador">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {nombresColabs.map((n) => (
-                    <SelectItem key={n} value={n}>{n}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          {esEgreso && (
+            <div className="flex items-center gap-2">
+              <input
+                id="egresoSalon"
+                type="checkbox"
+                checked={egresoSalon}
+                onChange={(e) => {
+                  setEgresoSalon(e.target.checked);
+                  if (e.target.checked) setColaborador("Salón");
+                  else setColaborador(userName);
+                }}
+                className="h-4 w-4 rounded border-stone-300 accent-stone-700 cursor-pointer"
+              />
+              <Label htmlFor="egresoSalon" className="cursor-pointer font-normal">
+                Egreso del salón
+              </Label>
             </div>
           )}
 
           <div className="space-y-1.5">
+            <Label htmlFor="colaborador">Colaborador</Label>
+            <Select
+              value={egresoSalon ? "Salón" : colaborador}
+              onValueChange={(v) => setColaborador(v ?? "")}
+              disabled={egresoSalon}
+            >
+              <SelectTrigger id="colaborador" className={egresoSalon ? "opacity-50 cursor-not-allowed" : ""}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {egresoSalon
+                  ? <SelectItem value="Salón">Salón</SelectItem>
+                  : nombresColabs.map((n) => (
+                      <SelectItem key={n} value={n}>{n}</SelectItem>
+                    ))
+                }
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
             <Label htmlFor="tipoPago">Tipo de pago</Label>
-            <Select value={tipoPago} onValueChange={(v) => setTipoPago(v ?? "Efectivo")}>
+            <Select value={tipoPago} onValueChange={(v) => { setTipoPago(v ?? "Efectivo"); precioInput.reset(); efectivoInput.reset(); terminalInput.reset(); }}>
               <SelectTrigger id="tipoPago">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Efectivo">Efectivo</SelectItem>
                 <SelectItem value="Terminal">Terminal</SelectItem>
+                {!esEgreso && <SelectItem value="Combinado">Combinado (Efectivo + Terminal)</SelectItem>}
               </SelectContent>
             </Select>
           </div>
@@ -256,6 +329,48 @@ export default function ModalRegistro({ tipo, userName, fecha, onGuardado }: Pro
                   placeholder="0.00"
                 />
               </div>
+            </div>
+          ) : tipoPago === "Combinado" ? (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="efectivoComb">Efectivo</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-sm select-none pointer-events-none">$</span>
+                  <Input
+                    id="efectivoComb"
+                    type="text"
+                    inputMode="decimal"
+                    className="pl-7"
+                    value={efectivoInput.display}
+                    onChange={efectivoInput.handleChange}
+                    onBlur={efectivoInput.handleBlur}
+                    onFocus={efectivoInput.handleFocus}
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="terminalComb">Terminal</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-sm select-none pointer-events-none">$</span>
+                  <Input
+                    id="terminalComb"
+                    type="text"
+                    inputMode="decimal"
+                    className="pl-7"
+                    value={terminalInput.display}
+                    onChange={terminalInput.handleChange}
+                    onBlur={terminalInput.handleBlur}
+                    onFocus={terminalInput.handleFocus}
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+              {(efectivoInput.rawValue ?? 0) > 0 && (terminalInput.rawValue ?? 0) > 0 && (
+                <p className="col-span-2 text-sm text-stone-500 text-right">
+                  Total: <strong className="text-stone-800">${((efectivoInput.rawValue ?? 0) + (terminalInput.rawValue ?? 0)).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</strong>
+                </p>
+              )}
             </div>
           ) : (
             <div className="space-y-1.5">

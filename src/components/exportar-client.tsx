@@ -192,6 +192,35 @@ export default function ExportarClient() {
             <span>Terminal: <strong>{fmt(resumen.porTipoPago.terminal)}</strong></span>
           </div>
 
+          {/* Total Caja */}
+          {(() => {
+            const subTotal = resumen.porColaborador.reduce((a, c) => a + c.total, 0) / 2;
+            const egresosColabs = resumen.porColaborador.reduce((a, c) => a + c.egresos, 0);
+            const egresosSalon = resumen.egresos
+              .filter((e) => e.colaborador === "Salón")
+              .reduce((a, e) => a + e.monto, 0);
+            const totalCaja = subTotal + egresosColabs - egresosSalon;
+            return (
+              <Card className="border-blue-200 bg-blue-50">
+                <CardContent className="p-4 sm:p-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                      <p className="text-xs text-blue-700 font-medium uppercase tracking-wide mb-1">Total Caja</p>
+                      <p className="text-2xl font-bold text-blue-900">{fmt(totalCaja)}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-blue-800">
+                      <span>Sub total caja: <strong>{fmt(subTotal)}</strong></span>
+                      <span>+ Egresos colaboradores: <strong>{fmt(egresosColabs)}</strong></span>
+                      {egresosSalon > 0 && (
+                        <span className="text-red-600">− Egresos salón: <strong>{fmt(egresosSalon)}</strong></span>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })()}
+
           {/* Desglose por colaborador */}
           {resumen.porColaborador.length > 0 && (
             <Card>
@@ -206,35 +235,65 @@ export default function ExportarClient() {
                       <TableHead className="text-right">Servicios</TableHead>
                       <TableHead className="text-right">Efectivo</TableHead>
                       <TableHead className="text-right">Terminal</TableHead>
-                      <TableHead className="text-right">Total</TableHead>
+                      <TableHead className="text-right">Bruto</TableHead>
+                      <TableHead className="text-right">Sub Total</TableHead>
+                      <TableHead className="text-right text-red-600">Egresos</TableHead>
+                      <TableHead className="text-right">Neto</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {resumen.porColaborador.map((c) => (
-                      <TableRow key={c.nombre}>
-                        <TableCell>
-                          <button
-                            onClick={() => setDetalleModal({ nombre: c.nombre, detalle: c.detalle })}
-                            className="font-medium text-left text-blue-600 underline-offset-2 hover:underline hover:text-blue-800 transition-colors cursor-pointer"
-                          >
-                            {c.nombre}
-                          </button>
-                        </TableCell>
-                        <TableCell className="text-right">{c.servicios}</TableCell>
-                        <TableCell className="text-right">{fmt(c.efectivo)}</TableCell>
-                        <TableCell className="text-right">{fmt(c.terminal)}</TableCell>
-                        <TableCell className="text-right font-semibold">{fmt(c.total)}</TableCell>
-                      </TableRow>
-                    ))}
-                    <TableRow className="bg-stone-50 font-semibold">
-                      <TableCell>Total</TableCell>
-                      <TableCell className="text-right">
-                        {resumen.porColaborador.reduce((a, c) => a + c.servicios, 0)}
-                      </TableCell>
-                      <TableCell className="text-right">{fmt(resumen.porTipoPago.efectivo)}</TableCell>
-                      <TableCell className="text-right">{fmt(resumen.porTipoPago.terminal)}</TableCell>
-                      <TableCell className="text-right">{fmt(resumen.totalIngresos)}</TableCell>
-                    </TableRow>
+                    {resumen.porColaborador.map((c) => {
+                      const esSalon = c.nombre === "Salón";
+                      const subTotal = esSalon ? null : c.total / 2;
+                      const neto = esSalon ? -c.egresos : (c.total / 2) - c.egresos;
+                      return (
+                        <TableRow key={c.nombre} className={esSalon ? "bg-stone-50/60 italic" : ""}>
+                          <TableCell>
+                            {esSalon ? (
+                              <span className="font-medium text-stone-500">Salón</span>
+                            ) : (
+                              <button
+                                onClick={() => setDetalleModal({ nombre: c.nombre, detalle: c.detalle })}
+                                className="font-medium text-left text-blue-600 underline-offset-2 hover:underline hover:text-blue-800 transition-colors cursor-pointer"
+                              >
+                                {c.nombre}
+                              </button>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">{esSalon ? "—" : c.servicios}</TableCell>
+                          <TableCell className="text-right">{esSalon ? "—" : fmt(c.efectivo)}</TableCell>
+                          <TableCell className="text-right">{esSalon ? "—" : fmt(c.terminal)}</TableCell>
+                          <TableCell className="text-right font-semibold">{esSalon ? "—" : fmt(c.total)}</TableCell>
+                          <TableCell className="text-right">{subTotal !== null ? fmt(subTotal) : "—"}</TableCell>
+                          <TableCell className="text-right text-red-600">{c.egresos > 0 ? fmt(c.egresos) : "—"}</TableCell>
+                          <TableCell className={`text-right font-semibold ${neto >= 0 ? "text-green-700" : "text-red-600"}`}>
+                            {fmt(neto)}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    {(() => {
+                      const totalBruto = resumen.porColaborador.reduce((a, c) => a + c.total, 0);
+                      const totalEgresosTabla = resumen.porColaborador.reduce((a, c) => a + c.egresos, 0);
+                      const totalSubTotal = totalBruto / 2;
+                      const totalNeto = totalSubTotal - totalEgresosTabla;
+                      return (
+                        <TableRow className="bg-stone-50 font-semibold">
+                          <TableCell>Total</TableCell>
+                          <TableCell className="text-right">
+                            {resumen.porColaborador.reduce((a, c) => a + c.servicios, 0)}
+                          </TableCell>
+                          <TableCell className="text-right">{fmt(resumen.porColaborador.reduce((a, c) => a + c.efectivo, 0))}</TableCell>
+                          <TableCell className="text-right">{fmt(resumen.porColaborador.reduce((a, c) => a + c.terminal, 0))}</TableCell>
+                          <TableCell className="text-right">{fmt(totalBruto)}</TableCell>
+                          <TableCell className="text-right">{fmt(totalSubTotal)}</TableCell>
+                          <TableCell className="text-right text-red-600">{fmt(totalEgresosTabla)}</TableCell>
+                          <TableCell className={`text-right ${totalNeto >= 0 ? "text-green-700" : "text-red-600"}`}>
+                            {fmt(totalNeto)}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })()}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -255,6 +314,7 @@ export default function ExportarClient() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Fecha</TableHead>
+                      <TableHead>Colaborador</TableHead>
                       <TableHead>Concepto</TableHead>
                       <TableHead>Notas</TableHead>
                       <TableHead className="text-right">Monto</TableHead>
@@ -264,13 +324,14 @@ export default function ExportarClient() {
                     {resumen.egresos.map((e, i) => (
                       <TableRow key={i}>
                         <TableCell className="text-stone-500 text-xs whitespace-nowrap">{e.fecha}</TableCell>
+                        <TableCell className="text-stone-600 text-sm">{e.colaborador || "—"}</TableCell>
                         <TableCell className="font-medium">{e.concepto}</TableCell>
                         <TableCell className="text-stone-400 text-xs">{e.notas || "—"}</TableCell>
                         <TableCell className="text-right font-medium text-red-600">{fmt(e.monto)}</TableCell>
                       </TableRow>
                     ))}
                     <TableRow className="bg-stone-50 font-semibold">
-                      <TableCell colSpan={3}>Total egresos</TableCell>
+                      <TableCell colSpan={4}>Total egresos</TableCell>
                       <TableCell className="text-right text-red-600">{fmt(resumen.totalEgresos)}</TableCell>
                     </TableRow>
                   </TableBody>

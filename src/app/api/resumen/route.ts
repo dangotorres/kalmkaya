@@ -17,6 +17,7 @@ export type RegistroDetalle = {
 
 export type EgresoDetalle = {
   fecha: string;
+  colaborador: string;
   concepto: string;
   monto: number;
   notas: string;
@@ -32,6 +33,7 @@ export type ResumenPeriodo = {
     servicios: number;
     efectivo: number;
     terminal: number;
+    egresos: number;
     total: number;
     detalle: RegistroDetalle[];
   }[];
@@ -78,11 +80,12 @@ export async function GET(req: NextRequest) {
     servicios: number;
     efectivo: number;
     terminal: number;
+    egresos: number;
     total: number;
     detalle: RegistroDetalle[];
   }> = {};
   COLABORADORES.forEach((c) => {
-    colabs[c] = { servicios: 0, efectivo: 0, terminal: 0, total: 0, detalle: [] };
+    colabs[c] = { servicios: 0, efectivo: 0, terminal: 0, egresos: 0, total: 0, detalle: [] };
   });
 
   let totalIngresos = 0;
@@ -100,12 +103,23 @@ export async function GET(req: NextRequest) {
       for (const r of registros) {
         if (r.egreso) {
           totalEgresos += r.egreso;
+          const egresoColab = r.colaborador || "Salón";
           egresosList.push({
             fecha: hoja,
+            colaborador: egresoColab,
             concepto: r.servicio || "Sin concepto",
             monto: r.egreso,
             notas: r.notas ?? "",
           });
+          if (r.colaborador && colabs[r.colaborador]) {
+            colabs[r.colaborador].egresos += r.egreso;
+          } else {
+            // Egreso del salón (sin colaborador o con "Salón")
+            if (!colabs["Salón"]) {
+              colabs["Salón"] = { servicios: 0, efectivo: 0, terminal: 0, egresos: 0, total: 0, detalle: [] };
+            }
+            colabs["Salón"].egresos += r.egreso;
+          }
           continue;
         }
         if (r.precio && r.colaborador) {

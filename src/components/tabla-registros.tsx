@@ -138,7 +138,13 @@ export default function TablaRegistros({ registros, nombreHoja, isAdmin, showTot
                 </TableHeader>
                 <TableBody>
                   {registros.map((r, i) => (
-                    <TableRow key={i} className={r.egreso ? "bg-red-50/40" : ""}>
+                    <TableRow key={i} className={
+                      r.egreso                    ? "bg-red-50/40"
+                      : r.colaborador === "Mike"  ? "bg-blue-50/60"
+                      : r.colaborador === "Karen" ? "bg-amber-50/60"
+                      : r.colaborador === "Clau"  ? "bg-purple-50/60"
+                      : ""
+                    }>
                       <TableCell className="text-stone-400 text-xs">{i + 1}</TableCell>
                       <TableCell className="font-medium">
                         {r.servicio || "—"}

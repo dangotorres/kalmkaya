@@ -96,7 +96,7 @@ export async function insertarRegistro(
   let fila: (string | number)[];
 
   if (datos.salidasEgresos) {
-    fila = [datos.servicio, "", datos.tipoPago, "", datos.salidasEgresos, datos.notas];
+    fila = [datos.servicio, datos.colaborador ?? "", datos.tipoPago, "", datos.salidasEgresos, datos.notas];
   } else {
     fila = [
       datos.servicio,
