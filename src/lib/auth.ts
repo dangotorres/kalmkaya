@@ -19,6 +19,7 @@ async function seedYObtenerUsuarios() {
       nombre: u.nombre,
       passwordHash: await bcrypt.hash(u.password, 10),
       rol: u.rol,
+      esquema: "comision" as const,
     }))
   );
   await semillarColaboradoresIniciales(iniciales);
