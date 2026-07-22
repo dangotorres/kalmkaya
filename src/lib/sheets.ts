@@ -184,6 +184,8 @@ export type Colaborador = {
   passwordHash: string;
   rol: "admin" | "supervisor" | "colaborador";
   esquema: "comision" | "fijo";
+  /** Porcentaje de comisión (0-100). Si se define, sobreescribe el default del esquema. */
+  porcentaje?: number;
 };
 
 export async function obtenerColaboradores(): Promise<Colaborador[]> {
@@ -192,16 +194,20 @@ export async function obtenerColaboradores(): Promise<Colaborador[]> {
   try {
     const res = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: `'${HOJA_COLABORADORES}'!A2:D100`,
+      range: `'${HOJA_COLABORADORES}'!A2:E100`,
     });
     return (res.data.values ?? [])
       .filter((row) => row[0])
-      .map((row) => ({
-        nombre: row[0] ?? "",
-        passwordHash: row[1] ?? "",
-        rol: (row[2] ?? "colaborador") as Colaborador["rol"],
-        esquema: (row[3] === "fijo" ? "fijo" : "comision") as Colaborador["esquema"],
-      }));
+      .map((row) => {
+        const pct = row[4] !== undefined && row[4] !== "" ? parseFloat(row[4]) : undefined;
+        return {
+          nombre: row[0] ?? "",
+          passwordHash: row[1] ?? "",
+          rol: (row[2] ?? "colaborador") as Colaborador["rol"],
+          esquema: (row[3] === "fijo" ? "fijo" : "comision") as Colaborador["esquema"],
+          porcentaje: pct !== undefined && !isNaN(pct) ? pct : undefined,
+        };
+      });
   } catch {
     return [];
   }
@@ -212,9 +218,9 @@ export async function agregarColaborador(colab: Colaborador): Promise<void> {
   const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID!;
   await sheets.spreadsheets.values.append({
     spreadsheetId,
-    range: `'${HOJA_COLABORADORES}'!A:D`,
+    range: `'${HOJA_COLABORADORES}'!A:E`,
     valueInputOption: "RAW",
-    requestBody: { values: [[colab.nombre, colab.passwordHash, colab.rol, colab.esquema ?? "comision"]] },
+    requestBody: { values: [[colab.nombre, colab.passwordHash, colab.rol, colab.esquema ?? "comision", colab.porcentaje ?? ""]] },
   });
 }
 
@@ -289,7 +295,7 @@ export async function actualizarEsquemaColaborador(
 
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: `'${HOJA_COLABORADORES}'!A2:D100`,
+    range: `'${HOJA_COLABORADORES}'!A2:E100`,
   });
   const rows = res.data.values ?? [];
   const idx = rows.findIndex((r) => r[0] === nombre);
@@ -301,6 +307,30 @@ export async function actualizarEsquemaColaborador(
     range: `'${HOJA_COLABORADORES}'!D${filaReal}`,
     valueInputOption: "RAW",
     requestBody: { values: [[nuevoEsquema]] },
+  });
+}
+
+export async function actualizarPorcentajeColaborador(
+  nombre: string,
+  porcentaje: number | null
+): Promise<void> {
+  const sheets = getSheetsClient();
+  const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID!;
+
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: `'${HOJA_COLABORADORES}'!A2:E100`,
+  });
+  const rows = res.data.values ?? [];
+  const idx = rows.findIndex((r) => r[0] === nombre);
+  if (idx === -1) throw new Error(`Colaborador "${nombre}" no encontrado`);
+
+  const filaReal = idx + 2;
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: `'${HOJA_COLABORADORES}'!E${filaReal}`,
+    valueInputOption: "RAW",
+    requestBody: { values: [[porcentaje !== null ? porcentaje : ""]] },
   });
 }
 

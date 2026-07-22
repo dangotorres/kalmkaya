@@ -161,28 +161,41 @@ export default function ExportarClient() {
         <div className="space-y-4">
 
           {/* Totales generales */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-3">
-            <Card className="border-green-200 bg-green-50">
-              <CardContent className="p-3 sm:p-4">
-                <p className="text-xs text-green-700 font-medium uppercase tracking-wide">Ingresos</p>
-                <p className="text-sm sm:text-xl font-bold text-green-800 mt-1">{fmt(resumen.totalIngresos)}</p>
-              </CardContent>
-            </Card>
-            <Card className="border-red-200 bg-red-50">
-              <CardContent className="p-3 sm:p-4">
-                <p className="text-xs text-red-700 font-medium uppercase tracking-wide">Egresos</p>
-                <p className="text-sm sm:text-xl font-bold text-red-800 mt-1">{fmt(resumen.totalEgresos)}</p>
-              </CardContent>
-            </Card>
-            <Card className={`${resumen.neto >= 0 ? "border-stone-200 bg-stone-50" : "border-orange-200 bg-orange-50"}`}>
-              <CardContent className="p-3 sm:p-4">
-                <p className="text-xs text-stone-700 font-medium uppercase tracking-wide">Neto</p>
-                <p className={`text-sm sm:text-xl font-bold mt-1 ${resumen.neto >= 0 ? "text-stone-800" : "text-orange-700"}`}>
-                  {fmt(resumen.neto)}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+          {(() => {
+            const netoColaboradores = resumen.porColaborador.reduce((a, c) => {
+              const pct = c.porcentaje !== null && c.porcentaje !== undefined
+                ? c.porcentaje / 100
+                : c.esquema === "fijo" ? 1 : 0.5;
+              const sub = c.total * pct;
+              return a + (sub - c.egresos);
+            }, 0);
+            const egresosMostrar = netoColaboradores + resumen.totalEgresos;
+            const netoMostrar = resumen.totalIngresos - egresosMostrar;
+            return (
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                <Card className="border-green-200 bg-green-50">
+                  <CardContent className="p-3 sm:p-4">
+                    <p className="text-xs text-green-700 font-medium uppercase tracking-wide">Ingresos</p>
+                    <p className="text-sm sm:text-xl font-bold text-green-800 mt-1">{fmt(resumen.totalIngresos)}</p>
+                  </CardContent>
+                </Card>
+                <Card className="border-red-200 bg-red-50">
+                  <CardContent className="p-3 sm:p-4">
+                    <p className="text-xs text-red-700 font-medium uppercase tracking-wide">Egresos</p>
+                    <p className="text-sm sm:text-xl font-bold text-red-800 mt-1">{fmt(egresosMostrar)}</p>
+                  </CardContent>
+                </Card>
+                <Card className={`${netoMostrar >= 0 ? "border-stone-200 bg-stone-50" : "border-orange-200 bg-orange-50"}`}>
+                  <CardContent className="p-3 sm:p-4">
+                    <p className="text-xs text-stone-700 font-medium uppercase tracking-wide">Neto</p>
+                    <p className={`text-sm sm:text-xl font-bold mt-1 ${netoMostrar >= 0 ? "text-stone-800" : "text-orange-700"}`}>
+                      {fmt(netoMostrar)}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            );
+          })()}
 
           {/* Stats rápidos */}
           <div className="flex flex-wrap gap-4 text-sm text-stone-600 bg-white border rounded-lg px-4 py-3">
@@ -192,29 +205,28 @@ export default function ExportarClient() {
             <span>Terminal: <strong>{fmt(resumen.porTipoPago.terminal)}</strong></span>
           </div>
 
-          {/* Total Caja */}
+          {/* Neto Salón */}
           {(() => {
-            const subTotal = resumen.porColaborador.reduce((a, c) =>
-              a + (c.esquema === "fijo" ? c.total : c.total / 2), 0);
-            const egresosColabs = resumen.porColaborador.reduce((a, c) => a + c.egresos, 0);
-            const egresosSalon = resumen.egresos
-              .filter((e) => e.colaborador === "Salón")
-              .reduce((a, e) => a + e.monto, 0);
-            const totalCaja = subTotal + egresosColabs - egresosSalon;
+            const netoColabs = resumen.porColaborador.reduce((a, c) => {
+              const pct = c.porcentaje !== null && c.porcentaje !== undefined
+                ? c.porcentaje / 100
+                : c.esquema === "fijo" ? 1 : 0.5;
+              const sub = c.total * pct;
+              return a + (sub - c.egresos);
+            }, 0);
+            const netoSalon = resumen.totalIngresos - netoColabs - resumen.totalEgresos;
             return (
               <Card className="border-blue-200 bg-blue-50">
                 <CardContent className="p-4 sm:p-5">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
-                      <p className="text-xs text-blue-700 font-medium uppercase tracking-wide mb-1">Total Caja</p>
-                      <p className="text-2xl font-bold text-blue-900">{fmt(totalCaja)}</p>
+                      <p className="text-xs text-blue-700 font-medium uppercase tracking-wide mb-1">Neto Salón</p>
+                      <p className="text-2xl font-bold text-blue-900">{fmt(netoSalon)}</p>
                     </div>
                     <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-blue-800">
-                      <span>Sub total caja: <strong>{fmt(subTotal)}</strong></span>
-                      <span>+ Egresos colaboradores: <strong>{fmt(egresosColabs)}</strong></span>
-                      {egresosSalon > 0 && (
-                        <span className="text-red-600">− Egresos salón: <strong>{fmt(egresosSalon)}</strong></span>
-                      )}
+                      <span>Ingresos: <strong>{fmt(resumen.totalIngresos)}</strong></span>
+                      <span className="text-stone-600">− Neto colaboradores: <strong>{fmt(netoColabs)}</strong></span>
+                      <span className="text-red-600">− Egresos: <strong>{fmt(resumen.totalEgresos)}</strong></span>
                     </div>
                   </div>
                 </CardContent>
@@ -245,9 +257,11 @@ export default function ExportarClient() {
                   <TableBody>
                     {resumen.porColaborador.map((c) => {
                       const esSalon = c.nombre === "Salón";
-                      const esFijo = c.esquema === "fijo";
-                      const subTotal = esSalon ? null : esFijo ? c.total : c.total / 2;
-                      const neto = esSalon ? -c.egresos : esFijo ? null : (c.total / 2) - c.egresos;
+                      const pct = c.porcentaje !== null && c.porcentaje !== undefined
+                        ? c.porcentaje / 100
+                        : c.esquema === "fijo" ? 1 : 0.5;
+                      const subTotal = esSalon ? null : c.total * pct;
+                      const neto = esSalon ? -c.egresos : subTotal! - c.egresos;
                       return (
                         <TableRow key={c.nombre} className={esSalon ? "bg-stone-50/60 italic" : ""}>
                           <TableCell>
@@ -268,8 +282,8 @@ export default function ExportarClient() {
                           <TableCell className="text-right font-semibold">{esSalon ? "—" : fmt(c.total)}</TableCell>
                           <TableCell className="text-right">{subTotal !== null ? fmt(subTotal) : "—"}</TableCell>
                           <TableCell className="text-right text-red-600">{c.egresos > 0 ? fmt(c.egresos) : "—"}</TableCell>
-                          <TableCell className={`text-right font-semibold ${neto === null ? "text-stone-400" : neto >= 0 ? "text-green-700" : "text-red-600"}`}>
-                            {neto === null ? "—" : fmt(neto)}
+                          <TableCell className={`text-right font-semibold ${neto >= 0 ? "text-green-700" : "text-red-600"}`}>
+                            {fmt(neto)}
                           </TableCell>
                         </TableRow>
                       );
@@ -277,8 +291,12 @@ export default function ExportarClient() {
                     {(() => {
                       const totalBruto = resumen.porColaborador.reduce((a, c) => a + c.total, 0);
                       const totalEgresosTabla = resumen.porColaborador.reduce((a, c) => a + c.egresos, 0);
-                      const totalSubTotal = resumen.porColaborador.reduce((a, c) =>
-                        a + (c.esquema === "fijo" ? c.total : c.total / 2), 0);
+                      const totalSubTotal = resumen.porColaborador.reduce((a, c) => {
+                        const pct = c.porcentaje !== null && c.porcentaje !== undefined
+                          ? c.porcentaje / 100
+                          : c.esquema === "fijo" ? 1 : 0.5;
+                        return a + c.total * pct;
+                      }, 0);
                       const totalNeto = totalSubTotal - totalEgresosTabla;
                       return (
                         <TableRow className="bg-stone-50 font-semibold">

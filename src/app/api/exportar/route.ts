@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { obtenerRegistrosDia, listarHojas } from "@/lib/sheets";
+import { obtenerRegistrosDia, listarHojas, obtenerColaboradores } from "@/lib/sheets";
 import { generarExcel } from "@/lib/excel";
 
 function parsearFecha(str: string): Date {
@@ -36,14 +36,17 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "No hay hojas en ese rango" }, { status: 404 });
   }
 
-  const dias = await Promise.all(
-    hojasEnRango.map(async (nombre) => ({
-      nombreHoja: nombre,
-      registros: await obtenerRegistrosDia(nombre),
-    }))
-  );
+  const [dias, colaboradoresData] = await Promise.all([
+    Promise.all(
+      hojasEnRango.map(async (nombre) => ({
+        nombreHoja: nombre,
+        registros: await obtenerRegistrosDia(nombre),
+      }))
+    ),
+    obtenerColaboradores(),
+  ]);
 
-  const buffer = generarExcel(dias);
+  const buffer = generarExcel(dias, colaboradoresData);
   const iniNombre = inicio.replace(/\//g, "-");
   const finNombre = fin.replace(/\//g, "-");
 

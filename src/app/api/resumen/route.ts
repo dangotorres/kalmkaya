@@ -31,6 +31,7 @@ export type ResumenPeriodo = {
   porColaborador: {
     nombre: string;
     esquema: "comision" | "fijo";
+    porcentaje: number | null;
     servicios: number;
     efectivo: number;
     terminal: number;
@@ -79,6 +80,7 @@ export async function GET(req: NextRequest) {
 
   const colabs: Record<string, {
     esquema: "comision" | "fijo";
+    porcentaje: number | null;
     servicios: number;
     efectivo: number;
     terminal: number;
@@ -87,7 +89,11 @@ export async function GET(req: NextRequest) {
     detalle: RegistroDetalle[];
   }> = {};
   colaboradoresData.forEach((c) => {
-    colabs[c.nombre] = { esquema: c.esquema ?? "comision", servicios: 0, efectivo: 0, terminal: 0, egresos: 0, total: 0, detalle: [] };
+    colabs[c.nombre] = {
+      esquema: c.esquema ?? "comision",
+      porcentaje: c.porcentaje ?? null,
+      servicios: 0, efectivo: 0, terminal: 0, egresos: 0, total: 0, detalle: [],
+    };
   });
 
   let totalIngresos = 0;
@@ -118,7 +124,7 @@ export async function GET(req: NextRequest) {
           } else {
             // Egreso del salón (sin colaborador o con "Salón")
             if (!colabs["Salón"]) {
-              colabs["Salón"] = { esquema: "comision", servicios: 0, efectivo: 0, terminal: 0, egresos: 0, total: 0, detalle: [] };
+              colabs["Salón"] = { esquema: "comision", porcentaje: null, servicios: 0, efectivo: 0, terminal: 0, egresos: 0, total: 0, detalle: [] };
             }
             colabs["Salón"].egresos += r.egreso;
           }

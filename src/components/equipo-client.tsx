@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-type Colaborador = { nombre: string; rol: string; esquema: string };
+type Colaborador = { nombre: string; rol: string; esquema: string; porcentaje: number | null };
 
 const ROL_LABELS: Record<string, string> = {
   admin: "Admin",
@@ -46,9 +46,10 @@ export default function EquipoClient({ currentUser }: Props) {
   const [loading, setLoading] = useState(true);
   const [modalAgregar, setModalAgregar] = useState(false);
   const [modalPassword, setModalPassword] = useState<string | null>(null);
-  const [modalRol, setModalRol] = useState<{ nombre: string; rolActual: string; esquemaActual: string; soloNombre?: boolean } | null>(null);
+  const [modalRol, setModalRol] = useState<{ nombre: string; rolActual: string; esquemaActual: string; porcentajeActual: number | null; soloNombre?: boolean } | null>(null);
   const [nuevoRolSeleccionado, setNuevoRolSeleccionado] = useState("");
   const [nuevoEsquemaSeleccionado, setNuevoEsquemaSeleccionado] = useState("comision");
+  const [nuevoPorcentajeInput, setNuevoPorcentajeInput] = useState<string>("");
   const [nuevoNombreInput, setNuevoNombreInput] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
@@ -57,6 +58,7 @@ export default function EquipoClient({ currentUser }: Props) {
   const [password, setPassword] = useState("");
   const [rol, setRol] = useState("colaborador");
   const [esquema, setEsquema] = useState("comision");
+  const [porcentajeNuevo, setPorcentajeNuevo] = useState<string>("");
   const [guardando, setGuardando] = useState(false);
 
   // Form cambiar contraseña
@@ -80,12 +82,18 @@ export default function EquipoClient({ currentUser }: Props) {
     const res = await fetch("/api/colaboradores", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nombre, password, rol, esquema }),
+      body: JSON.stringify({
+        nombre,
+        password,
+        rol,
+        esquema,
+        porcentaje: porcentajeNuevo !== "" ? Number(porcentajeNuevo) : null,
+      }),
     });
     setGuardando(false);
     if (res.ok) {
       toast.success(`${nombre} agregado correctamente`);
-      setNombre(""); setPassword(""); setRol("colaborador"); setEsquema("comision");
+      setNombre(""); setPassword(""); setRol("colaborador"); setEsquema("comision"); setPorcentajeNuevo("");
       setModalAgregar(false);
       cargar();
     } else {
@@ -117,16 +125,20 @@ export default function EquipoClient({ currentUser }: Props) {
     const nombreCambio = nombreTrimmed && nombreTrimmed !== modalRol.nombre ? nombreTrimmed : undefined;
     const rolCambio = nuevoRolSeleccionado !== modalRol.rolActual ? nuevoRolSeleccionado : undefined;
     const esquemaCambio = nuevoEsquemaSeleccionado !== modalRol.esquemaActual ? nuevoEsquemaSeleccionado : undefined;
-    if (!nombreCambio && !rolCambio && !esquemaCambio) {
+    const pctNum = nuevoPorcentajeInput !== "" ? Number(nuevoPorcentajeInput) : null;
+    const pctCambio = pctNum !== modalRol.porcentajeActual;
+    if (!nombreCambio && !rolCambio && !esquemaCambio && !pctCambio) {
       toast.info("No hay cambios que guardar");
       setModalRol(null);
       return;
     }
     setGuardando(true);
-    const payload: Record<string, string> = { nombre: modalRol.nombre };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const payload: Record<string, any> = { nombre: modalRol.nombre };
     if (nombreCambio) payload.nuevoNombre = nombreCambio;
     if (rolCambio) payload.rol = rolCambio;
     if (esquemaCambio) payload.esquema = esquemaCambio;
+    if (pctCambio) payload.porcentaje = pctNum;
     const res = await fetch("/api/colaboradores", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -196,8 +208,8 @@ export default function EquipoClient({ currentUser }: Props) {
                     <span className={`text-xs border rounded-full px-2 py-0.5 font-medium ${ROL_COLORS[c.rol] ?? ""}`}>
                       {ROL_LABELS[c.rol] ?? c.rol}
                     </span>
-                    <span className={`text-xs border rounded-full px-2 py-0.5 font-medium ${c.esquema === "fijo" ? "bg-amber-100 text-amber-700 border-amber-200" : "bg-teal-100 text-teal-700 border-teal-200"}`}>
-                      {c.esquema === "fijo" ? "Fijo" : "Comisión"}
+                    <span className={`text-xs border rounded-full px-2 py-0.5 font-medium ${c.porcentaje !== null ? "bg-indigo-100 text-indigo-700 border-indigo-200" : c.esquema === "fijo" ? "bg-amber-100 text-amber-700 border-amber-200" : "bg-teal-100 text-teal-700 border-teal-200"}`}>
+                      {c.porcentaje !== null ? `${c.porcentaje}%` : c.esquema === "fijo" ? "Fijo (100%)" : "Comisión (50%)"}
                     </span>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
@@ -208,8 +220,9 @@ export default function EquipoClient({ currentUser }: Props) {
                       onClick={() => {
                         setNuevoRolSeleccionado(c.rol);
                         setNuevoEsquemaSeleccionado(c.esquema ?? "comision");
+                        setNuevoPorcentajeInput(c.porcentaje !== null && c.porcentaje !== undefined ? String(c.porcentaje) : "");
                         setNuevoNombreInput(c.nombre);
-                        setModalRol({ nombre: c.nombre, rolActual: c.rol, esquemaActual: c.esquema ?? "comision", soloNombre: c.nombre === currentUser });
+                        setModalRol({ nombre: c.nombre, rolActual: c.rol, esquemaActual: c.esquema ?? "comision", porcentajeActual: c.porcentaje ?? null, soloNombre: c.nombre === currentUser });
                       }}
                     >
                       <Pencil size={14} />
@@ -275,6 +288,23 @@ export default function EquipoClient({ currentUser }: Props) {
                 </SelectContent>
               </Select>
             </div>
+            {esquema === "comision" && (
+              <div className="space-y-1.5">
+                <Label>Porcentaje personalizado <span className="text-stone-400 font-normal">(opcional)</span></Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={porcentajeNuevo}
+                    onChange={(e) => setPorcentajeNuevo(e.target.value)}
+                    placeholder="Ej: 30"
+                    className="w-28"
+                  />
+                  <span className="text-stone-500 text-sm">% del bruto — sobreescribe el 50%</span>
+                </div>
+              </div>
+            )}
             <div className="flex gap-2 pt-1">
               <Button type="button" variant="outline" className="flex-1" onClick={() => setModalAgregar(false)}>Cancelar</Button>
               <Button type="submit" className="flex-1" disabled={guardando}>{guardando ? "Guardando..." : "Agregar"}</Button>
@@ -346,16 +376,37 @@ export default function EquipoClient({ currentUser }: Props) {
                   <p className="text-xs text-stone-400">No puedes cambiar tu propio rol</p>
                 )}
               </div>
-              {!modalRol?.soloNombre && (
-                <div className="space-y-1.5">
-                  <Label>Esquema de pago</Label>
-                  <Select value={nuevoEsquemaSeleccionado} onValueChange={(v) => setNuevoEsquemaSeleccionado(v ?? "comision")}>
+              <div className="space-y-1.5">
+                <Label>Esquema de pago</Label>
+                  <Select value={nuevoEsquemaSeleccionado} onValueChange={(v) => {
+                    setNuevoEsquemaSeleccionado(v ?? "comision");
+                    setNuevoPorcentajeInput(""); // limpiar porcentaje al cambiar esquema
+                  }}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="comision">Comisión — 50% del bruto</SelectItem>
                       <SelectItem value="fijo">Fijo — 100% del bruto</SelectItem>
                     </SelectContent>
                   </Select>
+              </div>
+              {nuevoEsquemaSeleccionado === "comision" && (
+                <div className="space-y-1.5">
+                  <Label>Porcentaje personalizado <span className="text-stone-400 font-normal">(opcional)</span></Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      min={1}
+                      max={100}
+                      value={nuevoPorcentajeInput}
+                      onChange={(e) => setNuevoPorcentajeInput(e.target.value)}
+                      placeholder="Ej: 30"
+                      className="w-28"
+                    />
+                    <span className="text-stone-500 text-sm">% — sobreescribe el 50%</span>
+                  </div>
+                  {nuevoPorcentajeInput === "" && (
+                    <p className="text-xs text-stone-400">Dejar vacío para usar el 50% por defecto</p>
+                  )}
                 </div>
               )}
               <div className="flex gap-2 pt-1">

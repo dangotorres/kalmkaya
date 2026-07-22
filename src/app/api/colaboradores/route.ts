@@ -8,6 +8,7 @@ import {
   actualizarPasswordColaborador,
   actualizarRolColaborador,
   actualizarEsquemaColaborador,
+  actualizarPorcentajeColaborador,
   renombrarColaborador,
   Colaborador,
 } from "@/lib/sheets";
@@ -37,7 +38,12 @@ export async function GET(req: NextRequest) {
 
   const colaboradores = await obtenerColaboradores();
   return NextResponse.json(
-    colaboradores.map((c) => ({ nombre: c.nombre, rol: c.rol, esquema: c.esquema ?? "comision" }))
+    colaboradores.map((c) => ({
+      nombre: c.nombre,
+      rol: c.rol,
+      esquema: c.esquema ?? "comision",
+      porcentaje: c.porcentaje ?? null,
+    }))
   );
 }
 
@@ -48,7 +54,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  const { nombre, password, rol, esquema } = await req.json();
+  const { nombre, password, rol, esquema, porcentaje } = await req.json();
   if (!nombre || !password || !rol) {
     return NextResponse.json({ error: "Faltan campos" }, { status: 400 });
   }
@@ -59,7 +65,13 @@ export async function POST(req: NextRequest) {
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
-  await agregarColaborador({ nombre, passwordHash, rol, esquema: esquema ?? "comision" } as Colaborador);
+  await agregarColaborador({
+    nombre,
+    passwordHash,
+    rol,
+    esquema: esquema ?? "comision",
+    porcentaje: typeof porcentaje === "number" ? porcentaje : undefined,
+  } as Colaborador);
   return NextResponse.json({ ok: true });
 }
 
@@ -90,8 +102,8 @@ export async function PATCH(req: NextRequest) {
   const { nombre, passwordActual, passwordNueva } = body;
   const rol: string | undefined = typeof body.rol === "string" && body.rol ? body.rol : undefined;
 
-  // Edición de colaborador (nombre, rol y/o esquema) — solo admin
-  if ("rol" in body || "nuevoNombre" in body || "esquema" in body) {
+  // Edición de colaborador (nombre, rol, esquema y/o porcentaje) — solo admin
+  if ("rol" in body || "nuevoNombre" in body || "esquema" in body || "porcentaje" in body) {
     if (!nombre) {
       return NextResponse.json({ error: "Falta el nombre del colaborador" }, { status: 400 });
     }
@@ -133,6 +145,16 @@ export async function PATCH(req: NextRequest) {
       }
       const nombreFinal = nuevoNombre ?? nombre;
       await actualizarEsquemaColaborador(nombreFinal, esquema);
+    }
+
+    // Cambio de porcentaje (número 1-100, o null para limpiar)
+    if ("porcentaje" in body) {
+      const pct = body.porcentaje;
+      if (pct !== null && (typeof pct !== "number" || pct < 0 || pct > 100)) {
+        return NextResponse.json({ error: "Porcentaje inválido (0-100 o null)" }, { status: 400 });
+      }
+      const nombreFinal = nuevoNombre ?? nombre;
+      await actualizarPorcentajeColaborador(nombreFinal, pct);
     }
 
     return NextResponse.json({ ok: true });
