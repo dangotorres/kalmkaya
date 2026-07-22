@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-type Colaborador = { nombre: string; rol: string };
+type Colaborador = { nombre: string; rol: string; esquema: string };
 
 const ROL_LABELS: Record<string, string> = {
   admin: "Admin",
@@ -46,8 +46,9 @@ export default function EquipoClient({ currentUser }: Props) {
   const [loading, setLoading] = useState(true);
   const [modalAgregar, setModalAgregar] = useState(false);
   const [modalPassword, setModalPassword] = useState<string | null>(null);
-  const [modalRol, setModalRol] = useState<{ nombre: string; rolActual: string; soloNombre?: boolean } | null>(null);
+  const [modalRol, setModalRol] = useState<{ nombre: string; rolActual: string; esquemaActual: string; soloNombre?: boolean } | null>(null);
   const [nuevoRolSeleccionado, setNuevoRolSeleccionado] = useState("");
+  const [nuevoEsquemaSeleccionado, setNuevoEsquemaSeleccionado] = useState("comision");
   const [nuevoNombreInput, setNuevoNombreInput] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
@@ -55,6 +56,7 @@ export default function EquipoClient({ currentUser }: Props) {
   const [nombre, setNombre] = useState("");
   const [password, setPassword] = useState("");
   const [rol, setRol] = useState("colaborador");
+  const [esquema, setEsquema] = useState("comision");
   const [guardando, setGuardando] = useState(false);
 
   // Form cambiar contraseña
@@ -78,12 +80,12 @@ export default function EquipoClient({ currentUser }: Props) {
     const res = await fetch("/api/colaboradores", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nombre, password, rol }),
+      body: JSON.stringify({ nombre, password, rol, esquema }),
     });
     setGuardando(false);
     if (res.ok) {
       toast.success(`${nombre} agregado correctamente`);
-      setNombre(""); setPassword(""); setRol("colaborador");
+      setNombre(""); setPassword(""); setRol("colaborador"); setEsquema("comision");
       setModalAgregar(false);
       cargar();
     } else {
@@ -114,7 +116,8 @@ export default function EquipoClient({ currentUser }: Props) {
     const nombreTrimmed = nuevoNombreInput.trim();
     const nombreCambio = nombreTrimmed && nombreTrimmed !== modalRol.nombre ? nombreTrimmed : undefined;
     const rolCambio = nuevoRolSeleccionado !== modalRol.rolActual ? nuevoRolSeleccionado : undefined;
-    if (!nombreCambio && !rolCambio) {
+    const esquemaCambio = nuevoEsquemaSeleccionado !== modalRol.esquemaActual ? nuevoEsquemaSeleccionado : undefined;
+    if (!nombreCambio && !rolCambio && !esquemaCambio) {
       toast.info("No hay cambios que guardar");
       setModalRol(null);
       return;
@@ -123,6 +126,7 @@ export default function EquipoClient({ currentUser }: Props) {
     const payload: Record<string, string> = { nombre: modalRol.nombre };
     if (nombreCambio) payload.nuevoNombre = nombreCambio;
     if (rolCambio) payload.rol = rolCambio;
+    if (esquemaCambio) payload.esquema = esquemaCambio;
     const res = await fetch("/api/colaboradores", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -187,10 +191,13 @@ export default function EquipoClient({ currentUser }: Props) {
             <ul className="divide-y">
               {colaboradores.map((c) => (
                 <li key={c.nombre} className="flex flex-col sm:flex-row sm:items-center justify-between px-4 py-3 gap-2">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-wrap">
                     <span className="font-medium text-stone-800">{c.nombre}</span>
                     <span className={`text-xs border rounded-full px-2 py-0.5 font-medium ${ROL_COLORS[c.rol] ?? ""}`}>
                       {ROL_LABELS[c.rol] ?? c.rol}
+                    </span>
+                    <span className={`text-xs border rounded-full px-2 py-0.5 font-medium ${c.esquema === "fijo" ? "bg-amber-100 text-amber-700 border-amber-200" : "bg-teal-100 text-teal-700 border-teal-200"}`}>
+                      {c.esquema === "fijo" ? "Fijo" : "Comisión"}
                     </span>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
@@ -200,8 +207,9 @@ export default function EquipoClient({ currentUser }: Props) {
                       title={c.nombre === currentUser ? "Editar mi nombre" : "Editar colaborador"}
                       onClick={() => {
                         setNuevoRolSeleccionado(c.rol);
+                        setNuevoEsquemaSeleccionado(c.esquema ?? "comision");
                         setNuevoNombreInput(c.nombre);
-                        setModalRol({ nombre: c.nombre, rolActual: c.rol, soloNombre: c.nombre === currentUser });
+                        setModalRol({ nombre: c.nombre, rolActual: c.rol, esquemaActual: c.esquema ?? "comision", soloNombre: c.nombre === currentUser });
                       }}
                     >
                       <Pencil size={14} />
@@ -254,6 +262,16 @@ export default function EquipoClient({ currentUser }: Props) {
                   <SelectItem value="colaborador">Colaborador — solo registrar</SelectItem>
                   <SelectItem value="supervisor">Supervisor — ver reportes</SelectItem>
                   <SelectItem value="admin">Admin — acceso total</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Esquema de pago</Label>
+              <Select value={esquema} onValueChange={(v) => setEsquema(v ?? "comision")}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="comision">Comisión — 50% del bruto</SelectItem>
+                  <SelectItem value="fijo">Fijo — 100% del bruto</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -328,6 +346,18 @@ export default function EquipoClient({ currentUser }: Props) {
                   <p className="text-xs text-stone-400">No puedes cambiar tu propio rol</p>
                 )}
               </div>
+              {!modalRol?.soloNombre && (
+                <div className="space-y-1.5">
+                  <Label>Esquema de pago</Label>
+                  <Select value={nuevoEsquemaSeleccionado} onValueChange={(v) => setNuevoEsquemaSeleccionado(v ?? "comision")}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="comision">Comisión — 50% del bruto</SelectItem>
+                      <SelectItem value="fijo">Fijo — 100% del bruto</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="flex gap-2 pt-1">
                 <Button type="button" variant="outline" className="flex-1" onClick={() => setModalRol(null)}>Cancelar</Button>
                 <Button type="submit" className="flex-1" disabled={guardando}>

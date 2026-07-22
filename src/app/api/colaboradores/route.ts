@@ -7,6 +7,7 @@ import {
   eliminarColaborador,
   actualizarPasswordColaborador,
   actualizarRolColaborador,
+  actualizarEsquemaColaborador,
   renombrarColaborador,
   Colaborador,
 } from "@/lib/sheets";
@@ -36,7 +37,7 @@ export async function GET(req: NextRequest) {
 
   const colaboradores = await obtenerColaboradores();
   return NextResponse.json(
-    colaboradores.map((c) => ({ nombre: c.nombre, rol: c.rol }))
+    colaboradores.map((c) => ({ nombre: c.nombre, rol: c.rol, esquema: c.esquema ?? "comision" }))
   );
 }
 
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  const { nombre, password, rol } = await req.json();
+  const { nombre, password, rol, esquema } = await req.json();
   if (!nombre || !password || !rol) {
     return NextResponse.json({ error: "Faltan campos" }, { status: 400 });
   }
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
-  await agregarColaborador({ nombre, passwordHash, rol } as Colaborador);
+  await agregarColaborador({ nombre, passwordHash, rol, esquema: esquema ?? "comision" } as Colaborador);
   return NextResponse.json({ ok: true });
 }
 
@@ -89,8 +90,8 @@ export async function PATCH(req: NextRequest) {
   const { nombre, passwordActual, passwordNueva } = body;
   const rol: string | undefined = typeof body.rol === "string" && body.rol ? body.rol : undefined;
 
-  // Edición de colaborador (nombre y/o rol) — solo admin
-  if ("rol" in body || "nuevoNombre" in body) {
+  // Edición de colaborador (nombre, rol y/o esquema) — solo admin
+  if ("rol" in body || "nuevoNombre" in body || "esquema" in body) {
     if (!nombre) {
       return NextResponse.json({ error: "Falta el nombre del colaborador" }, { status: 400 });
     }
@@ -122,6 +123,16 @@ export async function PATCH(req: NextRequest) {
         return NextResponse.json({ error: "No puedes quitarte el rol de admin" }, { status: 400 });
       }
       await actualizarRolColaborador(nombreFinal, rol);
+    }
+
+    // Cambio de esquema
+    if ("esquema" in body) {
+      const esquema = body.esquema;
+      if (esquema !== "comision" && esquema !== "fijo") {
+        return NextResponse.json({ error: "Esquema inválido" }, { status: 400 });
+      }
+      const nombreFinal = nuevoNombre ?? nombre;
+      await actualizarEsquemaColaborador(nombreFinal, esquema);
     }
 
     return NextResponse.json({ ok: true });

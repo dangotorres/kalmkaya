@@ -8,6 +8,27 @@ const geist = Geist({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "KalmKaya",
   description: "Sistema de registro de servicios",
+  openGraph: {
+    title: "KalmKaya",
+    description: "Sistema de registro de servicios",
+    url: "https://kalmkaya.vercel.app",
+    siteName: "KalmKaya",
+    images: [
+      {
+        url: "https://kalmkaya.vercel.app/icon.png",
+        width: 512,
+        height: 512,
+        alt: "KalmKaya Salón",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "KalmKaya",
+    description: "Sistema de registro de servicios",
+    images: ["https://kalmkaya.vercel.app/icon.png"],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

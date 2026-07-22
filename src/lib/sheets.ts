@@ -183,6 +183,7 @@ export type Colaborador = {
   nombre: string;
   passwordHash: string;
   rol: "admin" | "supervisor" | "colaborador";
+  esquema: "comision" | "fijo";
 };
 
 export async function obtenerColaboradores(): Promise<Colaborador[]> {
@@ -191,7 +192,7 @@ export async function obtenerColaboradores(): Promise<Colaborador[]> {
   try {
     const res = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: `'${HOJA_COLABORADORES}'!A2:C100`,
+      range: `'${HOJA_COLABORADORES}'!A2:D100`,
     });
     return (res.data.values ?? [])
       .filter((row) => row[0])
@@ -199,6 +200,7 @@ export async function obtenerColaboradores(): Promise<Colaborador[]> {
         nombre: row[0] ?? "",
         passwordHash: row[1] ?? "",
         rol: (row[2] ?? "colaborador") as Colaborador["rol"],
+        esquema: (row[3] === "fijo" ? "fijo" : "comision") as Colaborador["esquema"],
       }));
   } catch {
     return [];
@@ -210,9 +212,9 @@ export async function agregarColaborador(colab: Colaborador): Promise<void> {
   const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID!;
   await sheets.spreadsheets.values.append({
     spreadsheetId,
-    range: `'${HOJA_COLABORADORES}'!A:C`,
+    range: `'${HOJA_COLABORADORES}'!A:D`,
     valueInputOption: "RAW",
-    requestBody: { values: [[colab.nombre, colab.passwordHash, colab.rol]] },
+    requestBody: { values: [[colab.nombre, colab.passwordHash, colab.rol, colab.esquema ?? "comision"]] },
   });
 }
 
@@ -275,6 +277,30 @@ export async function actualizarRolColaborador(
     range: `'${HOJA_COLABORADORES}'!C${filaReal}`,
     valueInputOption: "RAW",
     requestBody: { values: [[nuevoRol]] },
+  });
+}
+
+export async function actualizarEsquemaColaborador(
+  nombre: string,
+  nuevoEsquema: string
+): Promise<void> {
+  const sheets = getSheetsClient();
+  const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID!;
+
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: `'${HOJA_COLABORADORES}'!A2:D100`,
+  });
+  const rows = res.data.values ?? [];
+  const idx = rows.findIndex((r) => r[0] === nombre);
+  if (idx === -1) throw new Error(`Colaborador "${nombre}" no encontrado`);
+
+  const filaReal = idx + 2;
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: `'${HOJA_COLABORADORES}'!D${filaReal}`,
+    valueInputOption: "RAW",
+    requestBody: { values: [[nuevoEsquema]] },
   });
 }
 

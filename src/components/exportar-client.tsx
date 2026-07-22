@@ -194,7 +194,8 @@ export default function ExportarClient() {
 
           {/* Total Caja */}
           {(() => {
-            const subTotal = resumen.porColaborador.reduce((a, c) => a + c.total, 0) / 2;
+            const subTotal = resumen.porColaborador.reduce((a, c) =>
+              a + (c.esquema === "fijo" ? c.total : c.total / 2), 0);
             const egresosColabs = resumen.porColaborador.reduce((a, c) => a + c.egresos, 0);
             const egresosSalon = resumen.egresos
               .filter((e) => e.colaborador === "Salón")
@@ -244,8 +245,9 @@ export default function ExportarClient() {
                   <TableBody>
                     {resumen.porColaborador.map((c) => {
                       const esSalon = c.nombre === "Salón";
-                      const subTotal = esSalon ? null : c.total / 2;
-                      const neto = esSalon ? -c.egresos : (c.total / 2) - c.egresos;
+                      const esFijo = c.esquema === "fijo";
+                      const subTotal = esSalon ? null : esFijo ? c.total : c.total / 2;
+                      const neto = esSalon ? -c.egresos : esFijo ? null : (c.total / 2) - c.egresos;
                       return (
                         <TableRow key={c.nombre} className={esSalon ? "bg-stone-50/60 italic" : ""}>
                           <TableCell>
@@ -266,8 +268,8 @@ export default function ExportarClient() {
                           <TableCell className="text-right font-semibold">{esSalon ? "—" : fmt(c.total)}</TableCell>
                           <TableCell className="text-right">{subTotal !== null ? fmt(subTotal) : "—"}</TableCell>
                           <TableCell className="text-right text-red-600">{c.egresos > 0 ? fmt(c.egresos) : "—"}</TableCell>
-                          <TableCell className={`text-right font-semibold ${neto >= 0 ? "text-green-700" : "text-red-600"}`}>
-                            {fmt(neto)}
+                          <TableCell className={`text-right font-semibold ${neto === null ? "text-stone-400" : neto >= 0 ? "text-green-700" : "text-red-600"}`}>
+                            {neto === null ? "—" : fmt(neto)}
                           </TableCell>
                         </TableRow>
                       );
@@ -275,7 +277,8 @@ export default function ExportarClient() {
                     {(() => {
                       const totalBruto = resumen.porColaborador.reduce((a, c) => a + c.total, 0);
                       const totalEgresosTabla = resumen.porColaborador.reduce((a, c) => a + c.egresos, 0);
-                      const totalSubTotal = totalBruto / 2;
+                      const totalSubTotal = resumen.porColaborador.reduce((a, c) =>
+                        a + (c.esquema === "fijo" ? c.total : c.total / 2), 0);
                       const totalNeto = totalSubTotal - totalEgresosTabla;
                       return (
                         <TableRow className="bg-stone-50 font-semibold">

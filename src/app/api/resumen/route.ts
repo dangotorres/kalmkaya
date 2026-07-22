@@ -30,6 +30,7 @@ export type ResumenPeriodo = {
   neto: number;
   porColaborador: {
     nombre: string;
+    esquema: "comision" | "fijo";
     servicios: number;
     efectivo: number;
     terminal: number;
@@ -77,6 +78,7 @@ export async function GET(req: NextRequest) {
   }
 
   const colabs: Record<string, {
+    esquema: "comision" | "fijo";
     servicios: number;
     efectivo: number;
     terminal: number;
@@ -84,8 +86,8 @@ export async function GET(req: NextRequest) {
     total: number;
     detalle: RegistroDetalle[];
   }> = {};
-  COLABORADORES.forEach((c) => {
-    colabs[c] = { servicios: 0, efectivo: 0, terminal: 0, egresos: 0, total: 0, detalle: [] };
+  colaboradoresData.forEach((c) => {
+    colabs[c.nombre] = { esquema: c.esquema ?? "comision", servicios: 0, efectivo: 0, terminal: 0, egresos: 0, total: 0, detalle: [] };
   });
 
   let totalIngresos = 0;
@@ -116,7 +118,7 @@ export async function GET(req: NextRequest) {
           } else {
             // Egreso del salón (sin colaborador o con "Salón")
             if (!colabs["Salón"]) {
-              colabs["Salón"] = { servicios: 0, efectivo: 0, terminal: 0, egresos: 0, total: 0, detalle: [] };
+              colabs["Salón"] = { esquema: "comision", servicios: 0, efectivo: 0, terminal: 0, egresos: 0, total: 0, detalle: [] };
             }
             colabs["Salón"].egresos += r.egreso;
           }
@@ -153,7 +155,9 @@ export async function GET(req: NextRequest) {
     totalIngresos,
     totalEgresos,
     neto: totalIngresos - totalEgresos,
-    porColaborador: COLABORADORES.map((nombre) => ({ nombre, ...colabs[nombre] })).filter((c) => c.servicios > 0),
+    porColaborador: colaboradoresData
+      .map((cd) => ({ nombre: cd.nombre, ...colabs[cd.nombre] }))
+      .filter((c) => c.servicios > 0),
     egresos: egresosList,
     porTipoPago: { efectivo: efectivoGlobal, terminal: terminalGlobal },
     diasConDatos: hojasEnRango.length,
