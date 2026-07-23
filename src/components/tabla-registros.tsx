@@ -48,22 +48,22 @@ export default function TablaRegistros({ registros, nombreHoja, isAdmin, showTot
       {/* Cards de resumen — ocultas para colaboradores */}
       {showTotals && (
         <div className="grid grid-cols-3 gap-2 sm:gap-3">
-          <Card className="border-green-200 bg-green-50">
+          <Card className="border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950">
             <CardContent className="p-3 sm:p-4">
-              <p className="text-xs text-green-700 font-medium uppercase tracking-wide">Ingresos</p>
-              <p className="text-sm sm:text-xl font-bold text-green-800 mt-1">{fmt(totalIngresos)}</p>
+              <p className="text-xs text-green-700 dark:text-green-400 font-medium uppercase tracking-wide">Ingresos</p>
+              <p className="text-sm sm:text-xl font-bold text-green-800 dark:text-green-300 mt-1">{fmt(totalIngresos)}</p>
             </CardContent>
           </Card>
-          <Card className="border-red-200 bg-red-50">
+          <Card className="border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950">
             <CardContent className="p-3 sm:p-4">
-              <p className="text-xs text-red-700 font-medium uppercase tracking-wide">Egresos</p>
-              <p className="text-sm sm:text-xl font-bold text-red-800 mt-1">{fmt(totalEgresos)}</p>
+              <p className="text-xs text-red-700 dark:text-red-400 font-medium uppercase tracking-wide">Egresos</p>
+              <p className="text-sm sm:text-xl font-bold text-red-800 dark:text-red-300 mt-1">{fmt(totalEgresos)}</p>
             </CardContent>
           </Card>
-          <Card className={`border-stone-200 ${neto >= 0 ? "bg-stone-50" : "bg-orange-50"}`}>
+          <Card className={`border-stone-200 dark:border-stone-700 ${neto >= 0 ? "bg-stone-50 dark:bg-stone-800" : "bg-orange-50 dark:bg-orange-950"}`}>
             <CardContent className="p-3 sm:p-4">
-              <p className="text-xs text-stone-700 font-medium uppercase tracking-wide">Neto</p>
-              <p className={`text-sm sm:text-xl font-bold mt-1 ${neto >= 0 ? "text-stone-800" : "text-orange-700"}`}>
+              <p className="text-xs text-stone-700 dark:text-stone-400 font-medium uppercase tracking-wide">Neto</p>
+              <p className={`text-sm sm:text-xl font-bold mt-1 ${neto >= 0 ? "text-stone-800 dark:text-stone-200" : "text-orange-700 dark:text-orange-400"}`}>
                 {fmt(neto)}
               </p>
             </CardContent>
@@ -75,7 +75,7 @@ export default function TablaRegistros({ registros, nombreHoja, isAdmin, showTot
       {isAdmin && porColaborador.length > 0 && (
         <Card>
           <CardHeader className="pb-2 pt-4 px-4">
-            <CardTitle className="text-sm text-stone-600">Desglose por colaborador</CardTitle>
+            <CardTitle className="text-sm text-stone-600 dark:text-stone-400">Desglose por colaborador</CardTitle>
           </CardHeader>
           <CardContent className="px-4 pb-4 space-y-3">
             <div className="overflow-x-auto">
@@ -104,8 +104,8 @@ export default function TablaRegistros({ registros, nombreHoja, isAdmin, showTot
             </div>
             <Separator />
             <div className="flex flex-wrap gap-4 text-sm">
-              <span className="text-stone-600">Efectivo: <strong>{fmt(porTipoPago.efectivo)}</strong></span>
-              <span className="text-stone-600">Terminal: <strong>{fmt(porTipoPago.terminal)}</strong></span>
+              <span className="text-stone-600 dark:text-stone-400">Efectivo: <strong>{fmt(porTipoPago.efectivo)}</strong></span>
+              <span className="text-stone-600 dark:text-stone-400">Terminal: <strong>{fmt(porTipoPago.terminal)}</strong></span>
             </div>
           </CardContent>
         </Card>
@@ -113,15 +113,15 @@ export default function TablaRegistros({ registros, nombreHoja, isAdmin, showTot
 
       {/* Tabla de registros */}
       <Card>
-        <CardHeader className="pb-2 pt-4 px-4 flex-row items-center justify-between">
-          <CardTitle className="text-sm text-stone-600">
-            Registros del {nombreHoja}
-          </CardTitle>
+          <CardHeader className="pb-2 pt-4 px-4 flex-row items-center justify-between">
+            <CardTitle className="text-sm text-stone-600 dark:text-stone-400">
+              Registros del {nombreHoja}
+            </CardTitle>
           <Badge variant="outline">{registros.length} registros</Badge>
         </CardHeader>
         <CardContent className="p-0">
           {registros.length === 0 ? (
-            <p className="text-center text-stone-400 py-10 text-sm">Sin registros para este día</p>
+            <p className="text-center text-stone-400 dark:text-stone-600 py-10 text-sm">Sin registros para este día</p>
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -139,24 +139,24 @@ export default function TablaRegistros({ registros, nombreHoja, isAdmin, showTot
                 <TableBody>
                   {registros.map((r, i) => (
                     <TableRow key={i} className={
-                      r.egreso                    ? "bg-red-50/40"
-                      : r.colaborador === "Mike"  ? "bg-blue-50/60"
-                      : r.colaborador === "Karen" ? "bg-amber-50/60"
-                      : r.colaborador === "Clau"  ? "bg-purple-50/60"
+                      r.egreso                    ? "bg-red-100/70 dark:bg-red-950/40"
+                      : r.colaborador === "Mike"  ? "bg-blue-100/70 dark:bg-blue-950/40"
+                      : r.colaborador === "Karen" ? "bg-purple-100/70 dark:bg-purple-950/40"
+                      : r.colaborador === "Clau"  ? "bg-emerald-100/70 dark:bg-emerald-950/40"
                       : ""
                     }>
-                      <TableCell className="text-stone-400 text-xs">{i + 1}</TableCell>
+                      <TableCell className="text-stone-400 dark:text-stone-600 text-xs">{i + 1}</TableCell>
                       <TableCell className="font-medium">
                         {r.servicio || "—"}
                         {/* En mobile mostramos colaborador y pago bajo el nombre */}
-                        <span className="sm:hidden block text-xs text-stone-400 mt-0.5">
+                        <span className="sm:hidden block text-xs text-stone-400 dark:text-stone-500 mt-0.5">
                           {r.colaborador && <span>{r.colaborador}</span>}
                           {r.colaborador && r.tipoPago && <span> · </span>}
                           {r.tipoPago && <span>{r.tipoPago}</span>}
                           {r.egreso ? <span className="text-red-500"> · Egreso {fmt(r.egreso)}</span> : null}
                         </span>
                       </TableCell>
-                      <TableCell className="hidden sm:table-cell">{r.colaborador || <span className="text-stone-400">—</span>}</TableCell>
+                      <TableCell className="hidden sm:table-cell">{r.colaborador || <span className="text-stone-400 dark:text-stone-600">—</span>}</TableCell>
                       <TableCell className="hidden sm:table-cell">
                         {r.tipoPago ? (
                           <Badge variant={r.tipoPago === "Efectivo" ? "secondary" : "outline"} className="text-xs">
@@ -164,13 +164,13 @@ export default function TablaRegistros({ registros, nombreHoja, isAdmin, showTot
                           </Badge>
                         ) : "—"}
                       </TableCell>
-                      <TableCell className="text-right text-green-700 font-medium">
+                      <TableCell className="text-right text-green-700 dark:text-green-400 font-medium">
                         {r.precio ? fmt(r.precio) : "—"}
                       </TableCell>
-                      <TableCell className="text-right text-red-600 font-medium hidden sm:table-cell">
+                      <TableCell className="text-right text-red-600 dark:text-red-400 font-medium hidden sm:table-cell">
                         {r.egreso ? fmt(r.egreso) : "—"}
                       </TableCell>
-                      <TableCell className="text-stone-500 text-sm hidden sm:table-cell">{r.notas || "—"}</TableCell>
+                      <TableCell className="text-stone-500 dark:text-stone-400 text-sm hidden sm:table-cell">{r.notas || "—"}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

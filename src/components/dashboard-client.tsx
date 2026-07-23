@@ -55,12 +55,12 @@ export default function DashboardClient({
       {/* Encabezado */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-stone-800">Dashboard del día</h1>
-          <p className="text-stone-500 text-sm">{nombreHoja}</p>
+          <h1 className="text-2xl font-bold text-stone-800 dark:text-stone-100">Dashboard del día</h1>
+          <p className="text-stone-500 dark:text-stone-400 text-sm">{nombreHoja}</p>
         </div>
         <div className="flex flex-wrap gap-2 items-center">
           {sinHoja && (
-            <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+            <span className="text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded px-2 py-1">
               La hoja de hoy se creará al registrar el primer servicio
             </span>
           )}
@@ -86,7 +86,7 @@ export default function DashboardClient({
 
       {/* Tabla */}
       {reloading ? (
-        <div className="text-center py-12 text-stone-400 text-sm">Cargando...</div>
+        <div className="text-center py-12 text-stone-400 dark:text-stone-500 text-sm">Cargando...</div>
       ) : (
         <TablaRegistros registros={registros} nombreHoja={nombreHoja} isAdmin={canViewReports} showTotals={!isColaborador} />
       )}

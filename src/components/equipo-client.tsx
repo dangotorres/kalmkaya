@@ -32,9 +32,9 @@ const ROL_LABELS: Record<string, string> = {
 };
 
 const ROL_COLORS: Record<string, string> = {
-  admin: "bg-purple-100 text-purple-700 border-purple-200",
-  supervisor: "bg-blue-100 text-blue-700 border-blue-200",
-  colaborador: "bg-stone-100 text-stone-700 border-stone-200",
+  admin: "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800",
+  supervisor: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800",
+  colaborador: "bg-stone-100 text-stone-700 border-stone-200 dark:bg-stone-800 dark:text-stone-300 dark:border-stone-600",
 };
 
 interface Props {
@@ -186,29 +186,29 @@ export default function EquipoClient({ currentUser }: Props) {
     <div className="space-y-6 max-w-2xl">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-stone-800">Equipo</h1>
-          <p className="text-stone-500 text-sm">Administra colaboradores y contraseñas</p>
+          <h1 className="text-2xl font-bold text-stone-800 dark:text-stone-100">Equipo</h1>
+          <p className="text-stone-500 dark:text-stone-400 text-sm">Administra colaboradores y contraseñas</p>
         </div>
         <Button onClick={() => setModalAgregar(true)}>+ Agregar colaborador</Button>
       </div>
 
       <Card>
         <CardHeader className="pb-2 pt-4 px-4">
-          <CardTitle className="text-sm text-stone-600">Colaboradores actuales</CardTitle>
+          <CardTitle className="text-sm text-stone-600 dark:text-stone-400">Colaboradores actuales</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
-            <p className="text-center py-8 text-stone-400 text-sm">Cargando...</p>
+            <p className="text-center py-8 text-stone-400 dark:text-stone-500 text-sm">Cargando...</p>
           ) : (
             <ul className="divide-y">
               {colaboradores.map((c) => (
                 <li key={c.nombre} className="flex flex-col sm:flex-row sm:items-center justify-between px-4 py-3 gap-2">
                   <div className="flex items-center gap-3 flex-wrap">
-                    <span className="font-medium text-stone-800">{c.nombre}</span>
+                    <span className="font-medium text-stone-800 dark:text-stone-100">{c.nombre}</span>
                     <span className={`text-xs border rounded-full px-2 py-0.5 font-medium ${ROL_COLORS[c.rol] ?? ""}`}>
                       {ROL_LABELS[c.rol] ?? c.rol}
                     </span>
-                    <span className={`text-xs border rounded-full px-2 py-0.5 font-medium ${c.porcentaje !== null ? "bg-indigo-100 text-indigo-700 border-indigo-200" : c.esquema === "fijo" ? "bg-amber-100 text-amber-700 border-amber-200" : "bg-teal-100 text-teal-700 border-teal-200"}`}>
+                    <span className={`text-xs border rounded-full px-2 py-0.5 font-medium ${c.porcentaje !== null ? "bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-950 dark:text-indigo-300 dark:border-indigo-800" : c.esquema === "fijo" ? "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800" : "bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-950 dark:text-teal-300 dark:border-teal-800"}`}>
                       {c.porcentaje !== null ? `${c.porcentaje}%` : c.esquema === "fijo" ? "Fijo (100%)" : "Comisión (50%)"}
                     </span>
                   </div>
@@ -238,7 +238,7 @@ export default function EquipoClient({ currentUser }: Props) {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="border-red-200 text-red-600 hover:bg-red-50"
+                        className="border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
                         onClick={() => setConfirmDelete(c.nombre)}
                       >
                         Eliminar
@@ -301,7 +301,7 @@ export default function EquipoClient({ currentUser }: Props) {
                     placeholder="Ej: 30"
                     className="w-28"
                   />
-                  <span className="text-stone-500 text-sm">% del bruto — sobreescribe el 50%</span>
+                  <span className="text-stone-500 dark:text-stone-400 text-sm">% del bruto — sobreescribe el 50%</span>
                 </div>
               </div>
             )}
@@ -402,10 +402,10 @@ export default function EquipoClient({ currentUser }: Props) {
                       placeholder="Ej: 30"
                       className="w-28"
                     />
-                    <span className="text-stone-500 text-sm">% — sobreescribe el 50%</span>
+                    <span className="text-stone-500 dark:text-stone-400 text-sm">% — sobreescribe el 50%</span>
                   </div>
                   {nuevoPorcentajeInput === "" && (
-                    <p className="text-xs text-stone-400">Dejar vacío para usar el 50% por defecto</p>
+                    <p className="text-xs text-stone-400 dark:text-stone-500">Dejar vacío para usar el 50% por defecto</p>
                   )}
                 </div>
               )}
@@ -428,7 +428,7 @@ export default function EquipoClient({ currentUser }: Props) {
           </DialogHeader>
           {!!confirmDelete && (
             <>
-              <p className="text-sm text-stone-600 mt-1">Esta acción no se puede deshacer. El colaborador ya no podrá acceder a la app.</p>
+              <p className="text-sm text-stone-600 dark:text-stone-400 mt-1">Esta acción no se puede deshacer. El colaborador ya no podrá acceder a la app.</p>
               <div className="flex gap-2 mt-4">
                 <Button variant="outline" className="flex-1" onClick={() => setConfirmDelete(null)}>Cancelar</Button>
                 <Button className="flex-1 bg-red-600 hover:bg-red-700" onClick={() => confirmDelete && eliminar(confirmDelete)}>

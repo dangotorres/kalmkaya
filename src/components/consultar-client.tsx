@@ -59,8 +59,8 @@ export default function ConsultarClient({ userName, isAdmin }: Props) {
   return (
     <div className="space-y-6">
       <div className="text-center sm:text-left">
-        <h1 className="text-2xl font-bold text-stone-800">Consultar día</h1>
-        <p className="text-stone-500 text-sm">Selecciona una fecha para ver sus registros</p>
+        <h1 className="text-2xl font-bold text-stone-800 dark:text-stone-100">Consultar día</h1>
+        <p className="text-stone-500 dark:text-stone-400 text-sm">Selecciona una fecha para ver sus registros</p>
       </div>
 
       <div className="flex flex-col gap-3 w-full sm:flex-row sm:items-end sm:max-w-sm mx-auto sm:mx-0">
@@ -83,8 +83,8 @@ export default function ConsultarClient({ userName, isAdmin }: Props) {
       {registros !== null && (
         <div className="space-y-4">
           {sinHoja ? (
-            <div className="text-center py-12 bg-white rounded-lg border text-stone-400">
-              <p className="font-medium">No existe una hoja para {nombreHoja}</p>
+            <div className="text-center py-12 bg-white dark:bg-stone-900 rounded-lg border dark:border-stone-700 text-stone-400 dark:text-stone-500">
+              <p className="font-medium dark:text-stone-300">No existe una hoja para {nombreHoja}</p>
               <p className="text-sm mt-1">No se registraron datos ese día</p>
             </div>
           ) : (

@@ -100,8 +100,8 @@ export default function ExportarClient() {
     <div className="space-y-6 max-w-3xl">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-stone-800">Corte por periodo</h1>
-          <p className="text-stone-500 text-sm">
+          <h1 className="text-2xl font-bold text-stone-800 dark:text-stone-100">Corte por periodo</h1>
+          <p className="text-stone-500 dark:text-stone-400 text-sm">
             Consulta el resumen en pantalla o descarga el reporte .xlsx
           </p>
         </div>
@@ -173,22 +173,22 @@ export default function ExportarClient() {
             const netoMostrar = resumen.totalIngresos - egresosMostrar;
             return (
               <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                <Card className="border-green-200 bg-green-50">
+                <Card className="border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950">
                   <CardContent className="p-3 sm:p-4">
-                    <p className="text-xs text-green-700 font-medium uppercase tracking-wide">Ingresos</p>
-                    <p className="text-sm sm:text-xl font-bold text-green-800 mt-1">{fmt(resumen.totalIngresos)}</p>
+                    <p className="text-xs text-green-700 dark:text-green-400 font-medium uppercase tracking-wide">Ingresos</p>
+                    <p className="text-sm sm:text-xl font-bold text-green-800 dark:text-green-300 mt-1">{fmt(resumen.totalIngresos)}</p>
                   </CardContent>
                 </Card>
-                <Card className="border-red-200 bg-red-50">
+                <Card className="border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950">
                   <CardContent className="p-3 sm:p-4">
-                    <p className="text-xs text-red-700 font-medium uppercase tracking-wide">Egresos</p>
-                    <p className="text-sm sm:text-xl font-bold text-red-800 mt-1">{fmt(egresosMostrar)}</p>
+                    <p className="text-xs text-red-700 dark:text-red-400 font-medium uppercase tracking-wide">Egresos</p>
+                    <p className="text-sm sm:text-xl font-bold text-red-800 dark:text-red-300 mt-1">{fmt(egresosMostrar)}</p>
                   </CardContent>
                 </Card>
-                <Card className={`${netoMostrar >= 0 ? "border-stone-200 bg-stone-50" : "border-orange-200 bg-orange-50"}`}>
+                <Card className={`${netoMostrar >= 0 ? "border-stone-200 bg-stone-50 dark:border-stone-700 dark:bg-stone-800" : "border-orange-200 bg-orange-50 dark:border-orange-900 dark:bg-orange-950"}`}>
                   <CardContent className="p-3 sm:p-4">
-                    <p className="text-xs text-stone-700 font-medium uppercase tracking-wide">Neto</p>
-                    <p className={`text-sm sm:text-xl font-bold mt-1 ${netoMostrar >= 0 ? "text-stone-800" : "text-orange-700"}`}>
+                    <p className="text-xs text-stone-700 dark:text-stone-400 font-medium uppercase tracking-wide">Neto</p>
+                    <p className={`text-sm sm:text-xl font-bold mt-1 ${netoMostrar >= 0 ? "text-stone-800 dark:text-stone-200" : "text-orange-700 dark:text-orange-400"}`}>
                       {fmt(netoMostrar)}
                     </p>
                   </CardContent>
@@ -198,7 +198,7 @@ export default function ExportarClient() {
           })()}
 
           {/* Stats rápidos */}
-          <div className="flex flex-wrap gap-4 text-sm text-stone-600 bg-white border rounded-lg px-4 py-3">
+          <div className="flex flex-wrap gap-4 text-sm text-stone-600 dark:text-stone-400 bg-white dark:bg-stone-900 border dark:border-stone-700 rounded-lg px-4 py-3">
             <span>Días con registros: <strong>{resumen.diasConDatos}</strong></span>
             <span>Total registros: <strong>{resumen.totalRegistros}</strong></span>
             <span>Efectivo: <strong>{fmt(resumen.porTipoPago.efectivo)}</strong></span>
@@ -216,16 +216,16 @@ export default function ExportarClient() {
             }, 0);
             const netoSalon = resumen.totalIngresos - netoColabs - resumen.totalEgresos;
             return (
-              <Card className="border-blue-200 bg-blue-50">
+              <Card className="border-blue-200 bg-blue-50 dark:border-teal-800 dark:bg-teal-950">
                 <CardContent className="p-4 sm:p-5">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
-                      <p className="text-xs text-blue-700 font-medium uppercase tracking-wide mb-1">Neto Salón</p>
-                      <p className="text-2xl font-bold text-blue-900">{fmt(netoSalon)}</p>
+                      <p className="text-xs text-blue-700 dark:text-teal-400 font-medium uppercase tracking-wide mb-1">Neto Salón</p>
+                      <p className="text-2xl font-bold text-blue-900 dark:text-teal-200">{fmt(netoSalon)}</p>
                     </div>
-                    <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-blue-800">
+                    <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-blue-800 dark:text-teal-300">
                       <span>Ingresos: <strong>{fmt(resumen.totalIngresos)}</strong></span>
-                      <span className="text-stone-600">− Neto colaboradores: <strong>{fmt(netoColabs)}</strong></span>
+                      <span className="text-stone-600 dark:text-stone-400">− Neto colaboradores: <strong>{fmt(netoColabs)}</strong></span>
                       <span className="text-red-600">− Egresos: <strong>{fmt(resumen.totalEgresos)}</strong></span>
                     </div>
                   </div>
@@ -238,7 +238,7 @@ export default function ExportarClient() {
           {resumen.porColaborador.length > 0 && (
             <Card>
               <CardHeader className="pb-2 pt-4 px-4">
-                <CardTitle className="text-sm text-stone-600">Desglose por colaborador</CardTitle>
+                <CardTitle className="text-sm text-stone-600 dark:text-stone-400">Desglose por colaborador</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <Table>
@@ -263,14 +263,14 @@ export default function ExportarClient() {
                       const subTotal = esSalon ? null : c.total * pct;
                       const neto = esSalon ? -c.egresos : subTotal! - c.egresos;
                       return (
-                        <TableRow key={c.nombre} className={esSalon ? "bg-stone-50/60 italic" : ""}>
+                        <TableRow key={c.nombre} className={esSalon ? "bg-stone-50/60 dark:bg-stone-800/40 italic" : ""}>
                           <TableCell>
                             {esSalon ? (
-                              <span className="font-medium text-stone-500">Salón</span>
+                              <span className="font-medium text-stone-500 dark:text-stone-400">Salón</span>
                             ) : (
                               <button
                                 onClick={() => setDetalleModal({ nombre: c.nombre, detalle: c.detalle })}
-                                className="font-medium text-left text-blue-600 underline-offset-2 hover:underline hover:text-blue-800 transition-colors cursor-pointer"
+                                className="font-medium text-left text-blue-600 dark:text-blue-400 underline-offset-2 hover:underline hover:text-blue-800 dark:hover:text-blue-300 transition-colors cursor-pointer"
                               >
                                 {c.nombre}
                               </button>
@@ -299,7 +299,7 @@ export default function ExportarClient() {
                       }, 0);
                       const totalNeto = totalSubTotal - totalEgresosTabla;
                       return (
-                        <TableRow className="bg-stone-50 font-semibold">
+                        <TableRow className="bg-stone-50 dark:bg-stone-800/60 font-semibold">
                           <TableCell>Total</TableCell>
                           <TableCell className="text-right">
                             {resumen.porColaborador.reduce((a, c) => a + c.servicios, 0)}
@@ -325,7 +325,7 @@ export default function ExportarClient() {
           {resumen.egresos.length > 0 && (
             <Card>
               <CardHeader className="pb-2 pt-4 px-4">
-                <CardTitle className="text-sm text-stone-600 flex items-center gap-2">
+                <CardTitle className="text-sm text-stone-600 dark:text-stone-400 flex items-center gap-2">
                   Egresos del periodo
                   <span className="ml-auto text-red-600 font-bold">{fmt(resumen.totalEgresos)}</span>
                 </CardTitle>
@@ -344,14 +344,14 @@ export default function ExportarClient() {
                   <TableBody>
                     {resumen.egresos.map((e, i) => (
                       <TableRow key={i}>
-                        <TableCell className="text-stone-500 text-xs whitespace-nowrap">{e.fecha}</TableCell>
-                        <TableCell className="text-stone-600 text-sm">{e.colaborador || "—"}</TableCell>
+                        <TableCell className="text-stone-500 dark:text-stone-400 text-xs whitespace-nowrap">{e.fecha}</TableCell>
+                        <TableCell className="text-stone-600 dark:text-stone-300 text-sm">{e.colaborador || "—"}</TableCell>
                         <TableCell className="font-medium">{e.concepto}</TableCell>
                         <TableCell className="text-stone-400 text-xs">{e.notas || "—"}</TableCell>
                         <TableCell className="text-right font-medium text-red-600">{fmt(e.monto)}</TableCell>
                       </TableRow>
                     ))}
-                    <TableRow className="bg-stone-50 font-semibold">
+                    <TableRow className="bg-stone-50 dark:bg-stone-800/60 font-semibold">
                       <TableCell colSpan={4}>Total egresos</TableCell>
                       <TableCell className="text-right text-red-600">{fmt(resumen.totalEgresos)}</TableCell>
                     </TableRow>
@@ -373,7 +373,7 @@ export default function ExportarClient() {
             <DialogTitle>
               Servicios de {detalleModal?.nombre}
             </DialogTitle>
-            <p className="text-sm text-stone-500">{resumen?.nombreHoja}</p>
+            <p className="text-sm text-stone-500 dark:text-stone-400">{resumen?.nombreHoja}</p>
           </DialogHeader>
 
           {detalleModal && (
@@ -391,7 +391,7 @@ export default function ExportarClient() {
                   <TableBody>
                     {detalleModal.detalle.map((r, i) => (
                       <TableRow key={i}>
-                        <TableCell className="text-stone-500 text-xs whitespace-nowrap">{r.fecha}</TableCell>
+                        <TableCell className="text-stone-500 dark:text-stone-400 text-xs whitespace-nowrap">{r.fecha}</TableCell>
                         <TableCell className="font-medium">
                           {r.servicio}
                           {r.notas && (
@@ -411,8 +411,8 @@ export default function ExportarClient() {
                   </TableBody>
                 </Table>
               </div>
-              <div className="flex justify-between items-center px-4 py-3 border-t bg-stone-50 rounded-b-xl shrink-0 text-sm">
-                <span className="text-stone-500">{detalleModal.detalle.length} servicios</span>
+              <div className="flex justify-between items-center px-4 py-3 border-t dark:border-stone-700 bg-stone-50 dark:bg-stone-800 rounded-b-xl shrink-0 text-sm">
+                <span className="text-stone-500 dark:text-stone-400">{detalleModal.detalle.length} servicios</span>
                 <span className="font-bold">
                   Total: {fmt(detalleModal.detalle.reduce((a, r) => a + r.precio, 0))}
                 </span>

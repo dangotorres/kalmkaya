@@ -51,7 +51,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-stone-100 to-stone-200 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-stone-100 to-stone-200 dark:from-stone-900 dark:to-stone-950 p-4">
       <Card className="w-full max-w-sm shadow-lg">
         <CardHeader className="flex flex-col items-center gap-3 pb-2">
           <img
@@ -60,8 +60,8 @@ export default function LoginPage() {
             className="w-20 h-20 object-contain"
           />
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-stone-800">KalmKaya</h1>
-            <p className="text-sm text-stone-500">Sistema de registro de servicios</p>
+            <h1 className="text-2xl font-bold text-stone-800 dark:text-stone-100">KalmKaya</h1>
+            <p className="text-sm text-stone-500 dark:text-stone-400">Sistema de registro de servicios</p>
           </div>
         </CardHeader>
         <CardContent>
@@ -91,7 +91,7 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">
+              <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded p-2">
                 {error}
               </p>
             )}

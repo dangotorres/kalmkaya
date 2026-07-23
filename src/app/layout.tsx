@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const geist = Geist({ subsets: ["latin"] });
 
@@ -33,10 +34,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es">
-      <body className={`${geist.className} antialiased bg-gray-50 min-h-screen`}>
-        {children}
-        <Toaster richColors position="top-right" />
+    <html lang="es" suppressHydrationWarning>
+      <body className={`${geist.className} antialiased bg-gray-50 dark:bg-stone-950 min-h-screen`}>
+        <ThemeProvider>
+          {children}
+          <Toaster richColors position="top-right" />
+        </ThemeProvider>
       </body>
     </html>
   );
