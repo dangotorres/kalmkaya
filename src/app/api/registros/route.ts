@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import {
   obtenerRegistrosDia,
   insertarRegistro,
+  actualizarRegistro,
+  eliminarRegistro,
   crearHojaDelDia,
   fechaANombreHoja,
 } from "@/lib/sheets";
@@ -52,6 +54,52 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Error al guardar";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  const session = await auth();
+  const role = session?.user?.role;
+  if (!session || (role !== "admin" && role !== "supervisor")) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+
+  const body = await req.json();
+  const { fecha, fila, servicio, colaborador, tipoPago, precio, egreso, notas } = body;
+
+  if (!fecha || !fila || !servicio) {
+    return NextResponse.json({ error: "Faltan campos obligatorios" }, { status: 400 });
+  }
+
+  try {
+    await actualizarRegistro(fecha, fila, { servicio, colaborador, tipoPago, precio: precio ?? null, egreso: egreso ?? null, notas: notas ?? "" });
+    return NextResponse.json({ ok: true });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Error al actualizar";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  const session = await auth();
+  const role = session?.user?.role;
+  if (!session || (role !== "admin" && role !== "supervisor")) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+
+  const body = await req.json();
+  const { fecha, fila } = body;
+
+  if (!fecha || !fila) {
+    return NextResponse.json({ error: "Faltan campos" }, { status: 400 });
+  }
+
+  try {
+    await eliminarRegistro(fecha, fila);
+    return NextResponse.json({ ok: true });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Error al eliminar";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

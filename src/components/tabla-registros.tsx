@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Registro } from "@/lib/sheets";
 import {
   Table,
@@ -12,12 +13,14 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import ModalEditarRegistro from "@/components/modal-editar-registro";
 
 interface Props {
   registros: Registro[];
   nombreHoja: string;
   isAdmin: boolean;
   showTotals?: boolean;
+  onRecargar?: () => void;
 }
 
 function fmt(n: number | null) {
@@ -25,7 +28,8 @@ function fmt(n: number | null) {
   return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
 }
 
-export default function TablaRegistros({ registros, nombreHoja, isAdmin, showTotals = true }: Props) {
+export default function TablaRegistros({ registros, nombreHoja, isAdmin, showTotals = true, onRecargar }: Props) {
+  const [registroEditar, setRegistroEditar] = useState<Registro | null>(null);
   const totalIngresos = registros.reduce((a, r) => a + (r.precio ?? 0), 0);
   const totalEgresos = registros.reduce((a, r) => a + (r.egreso ?? 0), 0);
   const neto = totalIngresos - totalEgresos;
@@ -103,9 +107,14 @@ export default function TablaRegistros({ registros, nombreHoja, isAdmin, showTot
               </Table>
             </div>
             <Separator />
-            <div className="flex flex-wrap gap-4 text-sm">
-              <span className="text-stone-600 dark:text-stone-400">Efectivo: <strong>{fmt(porTipoPago.efectivo)}</strong></span>
-              <span className="text-stone-600 dark:text-stone-400">Terminal: <strong>{fmt(porTipoPago.terminal)}</strong></span>
+            <div className="flex flex-wrap items-center justify-between gap-4 text-sm">
+              <div className="flex flex-wrap gap-4">
+                <span className="text-stone-600 dark:text-stone-400">Efectivo: <strong>{fmt(porTipoPago.efectivo)}</strong></span>
+                <span className="text-stone-600 dark:text-stone-400">Terminal: <strong>{fmt(porTipoPago.terminal)}</strong></span>
+              </div>
+              <span className="text-stone-500 dark:text-stone-400">
+                Caja del día: <strong className={porTipoPago.efectivo - totalEgresos >= 0 ? "text-green-700 dark:text-green-400" : "text-red-600 dark:text-red-400"}>{fmt(porTipoPago.efectivo - totalEgresos)}</strong>
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -138,13 +147,18 @@ export default function TablaRegistros({ registros, nombreHoja, isAdmin, showTot
                 </TableHeader>
                 <TableBody>
                   {registros.map((r, i) => (
-                    <TableRow key={i} className={
-                      r.egreso                    ? "bg-red-100/70 dark:bg-red-950/40"
-                      : r.colaborador === "Mike"  ? "bg-blue-100/70 dark:bg-blue-950/40"
-                      : r.colaborador === "Karen" ? "bg-purple-100/70 dark:bg-purple-950/40"
-                      : r.colaborador === "Clau"  ? "bg-emerald-100/70 dark:bg-emerald-950/40"
-                      : ""
-                    }>
+                    <TableRow
+                      key={i}
+                      onClick={() => isAdmin && setRegistroEditar(r)}
+                      className={[
+                        r.egreso                    ? "bg-red-100/70 dark:bg-red-950/40"
+                        : r.colaborador === "Mike"  ? "bg-blue-100/70 dark:bg-blue-950/40"
+                        : r.colaborador === "Karen" ? "bg-purple-100/70 dark:bg-purple-950/40"
+                        : r.colaborador === "Clau"  ? "bg-emerald-100/70 dark:bg-emerald-950/40"
+                        : "",
+                        isAdmin ? "cursor-pointer hover:brightness-95 dark:hover:brightness-110 transition-all" : "",
+                      ].join(" ")}
+                    >
                       <TableCell className="text-stone-400 dark:text-stone-600 text-xs">{i + 1}</TableCell>
                       <TableCell className="font-medium">
                         {r.servicio || "—"}
@@ -179,6 +193,15 @@ export default function TablaRegistros({ registros, nombreHoja, isAdmin, showTot
           )}
         </CardContent>
       </Card>
+
+      {isAdmin && (
+        <ModalEditarRegistro
+          registro={registroEditar}
+          nombreHoja={nombreHoja}
+          onClose={() => setRegistroEditar(null)}
+          onGuardado={() => { onRecargar?.(); }}
+        />
+      )}
     </div>
   );
 }

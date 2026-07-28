@@ -107,7 +107,7 @@ export default function ConsultarClient({ userName, isAdmin }: Props) {
                   </Button>
                 )}
               </div>
-              <TablaRegistros registros={registros} nombreHoja={nombreHoja} isAdmin={true} />
+              <TablaRegistros registros={registros} nombreHoja={nombreHoja} isAdmin={isAdmin} onRecargar={buscar} />
             </>
           )}
         </div>

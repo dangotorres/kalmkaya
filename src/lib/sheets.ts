@@ -116,6 +116,71 @@ export async function insertarRegistro(
   });
 }
 
+export async function actualizarRegistro(
+  nombreHoja: string,
+  fila: number,
+  datos: {
+    servicio: string;
+    colaborador: string;
+    tipoPago: string;
+    precio: number | null;
+    egreso: number | null;
+    notas: string;
+  }
+): Promise<void> {
+  const sheets = getSheetsClient();
+  const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID!;
+
+  const valores: (string | number)[] = [
+    datos.servicio,
+    datos.colaborador,
+    datos.tipoPago,
+    datos.precio ?? "",
+    datos.egreso ?? "",
+    datos.notas,
+  ];
+
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: `'${nombreHoja}'!A${fila}:F${fila}`,
+    valueInputOption: "USER_ENTERED",
+    requestBody: { values: [valores] },
+  });
+}
+
+export async function eliminarRegistro(
+  nombreHoja: string,
+  fila: number
+): Promise<void> {
+  const sheets = getSheetsClient();
+  const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID!;
+
+  // Obtener el sheetId por nombre
+  const spreadsheet = await sheets.spreadsheets.get({ spreadsheetId });
+  const hoja = spreadsheet.data.sheets?.find(
+    (h) => h.properties?.title === nombreHoja
+  );
+  if (!hoja?.properties?.sheetId) throw new Error(`Hoja "${nombreHoja}" no encontrada`);
+
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId,
+    requestBody: {
+      requests: [
+        {
+          deleteDimension: {
+            range: {
+              sheetId: hoja.properties.sheetId,
+              dimension: "ROWS",
+              startIndex: fila - 1, // 0-based
+              endIndex: fila,       // exclusivo
+            },
+          },
+        },
+      ],
+    },
+  });
+}
+
 export async function crearHojaDelDia(nombreHoja: string): Promise<void> {
   const sheets = getSheetsClient();
   const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID!;

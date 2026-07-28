@@ -88,7 +88,7 @@ export default function DashboardClient({
       {reloading ? (
         <div className="text-center py-12 text-stone-400 dark:text-stone-500 text-sm">Cargando...</div>
       ) : (
-        <TablaRegistros registros={registros} nombreHoja={nombreHoja} isAdmin={canViewReports} showTotals={!isColaborador} />
+        <TablaRegistros registros={registros} nombreHoja={nombreHoja} isAdmin={canViewReports} showTotals={!isColaborador} onRecargar={recargar} />
       )}
     </div>
   );
