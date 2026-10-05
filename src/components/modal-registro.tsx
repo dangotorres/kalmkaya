@@ -368,7 +368,7 @@ export default function ModalRegistro({ tipo, userName, fecha, onGuardado }: Pro
               </div>
               {(efectivoInput.rawValue ?? 0) > 0 && (terminalInput.rawValue ?? 0) > 0 && (
                 <p className="col-span-2 text-sm text-stone-500 text-right">
-                  Total: <strong className="text-stone-800">${((efectivoInput.rawValue ?? 0) + (terminalInput.rawValue ?? 0)).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</strong>
+                  Total: <strong className="text-stone-800 dark:text-stone-100">${((efectivoInput.rawValue ?? 0) + (terminalInput.rawValue ?? 0)).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</strong>
                 </p>
               )}
             </div>

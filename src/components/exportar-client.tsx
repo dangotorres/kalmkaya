@@ -35,6 +35,7 @@ function inputANombreHoja(val: string): string {
 }
 
 type DetalleModal = { nombre: string; detalle: RegistroDetalle[] } | null;
+type EgresoModal = { colaborador: string; egresos: EgresoDetalle[] } | null;
 
 export default function ExportarClient() {
   const [inicio, setInicio] = useState("");
@@ -43,6 +44,7 @@ export default function ExportarClient() {
   const [exportando, setExportando] = useState(false);
   const [resumen, setResumen] = useState<ResumenPeriodo | null>(null);
   const [detalleModal, setDetalleModal] = useState<DetalleModal>(null);
+  const [egresoModal, setEgresoModal] = useState<EgresoModal>(null);
 
   const hoy = new Date().toISOString().split("T")[0];
 
@@ -205,34 +207,6 @@ export default function ExportarClient() {
             <span>Terminal: <strong>{fmt(resumen.porTipoPago.terminal)}</strong></span>
           </div>
 
-          {/* Neto Salón */}
-          {(() => {
-            const netoColabs = resumen.porColaborador.reduce((a, c) => {
-              const pct = c.porcentaje !== null && c.porcentaje !== undefined
-                ? c.porcentaje / 100
-                : c.esquema === "fijo" ? 1 : 0.5;
-              const sub = c.total * pct;
-              return a + (sub - c.egresos);
-            }, 0);
-            const netoSalon = resumen.totalIngresos - netoColabs - resumen.totalEgresos;
-            return (
-              <Card className="border-blue-200 bg-blue-50 dark:border-teal-800 dark:bg-teal-950">
-                <CardContent className="p-4 sm:p-5">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div>
-                      <p className="text-xs text-blue-700 dark:text-teal-400 font-medium uppercase tracking-wide mb-1">Neto Salón</p>
-                      <p className="text-2xl font-bold text-blue-900 dark:text-teal-200">{fmt(netoSalon)}</p>
-                    </div>
-                    <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-blue-800 dark:text-teal-300">
-                      <span>Ingresos: <strong>{fmt(resumen.totalIngresos)}</strong></span>
-                      <span className="text-stone-600 dark:text-stone-400">− Neto colaboradores: <strong>{fmt(netoColabs)}</strong></span>
-                      <span className="text-red-600">− Egresos: <strong>{fmt(resumen.totalEgresos)}</strong></span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })()}
 
           {/* Desglose por colaborador */}
           {resumen.porColaborador.length > 0 && (
@@ -321,45 +295,55 @@ export default function ExportarClient() {
             </Card>
           )}
 
-          {/* Desglose de egresos */}
-          {resumen.egresos.length > 0 && (
-            <Card>
-              <CardHeader className="pb-2 pt-4 px-4">
-                <CardTitle className="text-sm text-stone-600 dark:text-stone-400 flex items-center gap-2">
-                  Egresos del periodo
-                  <span className="ml-auto text-red-600 font-bold">{fmt(resumen.totalEgresos)}</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Fecha</TableHead>
-                      <TableHead>Colaborador</TableHead>
-                      <TableHead>Concepto</TableHead>
-                      <TableHead>Notas</TableHead>
-                      <TableHead className="text-right">Monto</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {resumen.egresos.map((e, i) => (
-                      <TableRow key={i}>
-                        <TableCell className="text-stone-500 dark:text-stone-400 text-xs whitespace-nowrap">{e.fecha}</TableCell>
-                        <TableCell className="text-stone-600 dark:text-stone-300 text-sm">{e.colaborador || "—"}</TableCell>
-                        <TableCell className="font-medium">{e.concepto}</TableCell>
-                        <TableCell className="text-stone-400 text-xs">{e.notas || "—"}</TableCell>
-                        <TableCell className="text-right font-medium text-red-600">{fmt(e.monto)}</TableCell>
+          {/* Desglose de egresos agrupado por colaborador */}
+          {resumen.egresos.length > 0 && (() => {
+            // Agrupar por colaborador
+            const grupos: Record<string, number> = {};
+            for (const e of resumen.egresos) {
+              const key = e.colaborador || "Salón";
+              grupos[key] = (grupos[key] ?? 0) + e.monto;
+            }
+            const filas = Object.entries(grupos);
+            return (
+              <Card>
+                <CardHeader className="pb-2 pt-4 px-4">
+                  <CardTitle className="text-sm text-stone-600 dark:text-stone-400 flex items-center gap-2">
+                    Egresos del periodo
+                    <span className="ml-auto text-red-600 font-bold">{fmt(resumen.totalEgresos)}</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Colaborador</TableHead>
+                        <TableHead className="text-right">Egresos</TableHead>
                       </TableRow>
-                    ))}
-                    <TableRow className="bg-stone-50 dark:bg-stone-800/60 font-semibold">
-                      <TableCell colSpan={4}>Total egresos</TableCell>
-                      <TableCell className="text-right text-red-600">{fmt(resumen.totalEgresos)}</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          )}
+                    </TableHeader>
+                    <TableBody>
+                      {filas.map(([colab, total]) => (
+                        <TableRow
+                          key={colab}
+                          className="cursor-pointer hover:bg-stone-100 dark:hover:bg-stone-800/60 transition-colors"
+                          onClick={() => setEgresoModal({
+                            colaborador: colab,
+                            egresos: resumen.egresos.filter((e) => (e.colaborador || "Salón") === colab),
+                          })}
+                        >
+                          <TableCell className="font-medium text-blue-600 dark:text-blue-400 underline underline-offset-2">{colab}</TableCell>
+                          <TableCell className="text-right font-medium text-red-600">{fmt(total)}</TableCell>
+                        </TableRow>
+                      ))}
+                      <TableRow className="bg-stone-50 dark:bg-stone-800/60 font-semibold">
+                        <TableCell>Total egresos</TableCell>
+                        <TableCell className="text-right text-red-600">{fmt(resumen.totalEgresos)}</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            );
+          })()}
 
         </div>
       )}
@@ -415,6 +399,54 @@ export default function ExportarClient() {
                 <span className="text-stone-500 dark:text-stone-400">{detalleModal.detalle.length} servicios</span>
                 <span className="font-bold">
                   Total: {fmt(detalleModal.detalle.reduce((a, r) => a + r.precio, 0))}
+                </span>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de detalle de egresos por colaborador */}
+      <Dialog
+        open={!!egresoModal}
+        onOpenChange={(open) => { if (!open) setEgresoModal(null); }}
+      >
+        <DialogContent className="flex flex-col w-[95vw] max-w-lg max-h-[85vh] rounded-xl p-0 gap-0">
+          <DialogHeader className="px-4 pt-4 pb-3 border-b shrink-0">
+            <DialogTitle>
+              Egresos de {egresoModal?.colaborador}
+            </DialogTitle>
+            <p className="text-sm text-stone-500 dark:text-stone-400">{resumen?.nombreHoja}</p>
+          </DialogHeader>
+
+          {egresoModal && (
+            <div className="flex flex-col flex-1 min-h-0">
+              <div className="overflow-y-auto flex-1 px-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead>Concepto</TableHead>
+                      <TableHead>Notas</TableHead>
+                      <TableHead className="text-right">Monto</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {egresoModal.egresos.map((e, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="text-stone-500 dark:text-stone-400 text-xs whitespace-nowrap">{e.fecha}</TableCell>
+                        <TableCell className="font-medium">{e.concepto}</TableCell>
+                        <TableCell className="text-stone-400 text-xs">{e.notas || "—"}</TableCell>
+                        <TableCell className="text-right font-medium text-red-600">{fmt(e.monto)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              <div className="flex justify-between items-center px-4 py-3 border-t dark:border-stone-700 bg-stone-50 dark:bg-stone-800 rounded-b-xl shrink-0 text-sm">
+                <span className="text-stone-500 dark:text-stone-400">{egresoModal.egresos.length} egresos</span>
+                <span className="font-bold text-red-600">
+                  Total: {fmt(egresoModal.egresos.reduce((a, e) => a + e.monto, 0))}
                 </span>
               </div>
             </div>
